@@ -1,0 +1,8 @@
+*.py[co]
+*~
+*.jython_cache
+/.idea/
+/venv/
+/build/
+/dist/
+__pycache__
