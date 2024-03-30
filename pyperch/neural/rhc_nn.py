@@ -35,3 +35,18 @@ class RHCModule(nn.Module):
         for param in net.module_.parameters():
             param.data += torch.randn(param.data.size())
 
+    @staticmethod
+    def register_rhc_training_step():
+        @add_to(NeuralNet)
+        def train_step_single(self, batch, **fit_params):
+            self._set_training(True)
+            Xi, yi = unpack_data(batch)
+            y_pred = self.infer(Xi, **fit_params)
+            loss = self.get_loss(y_pred, yi, X=Xi, training=True)
+            # disable backprop and run custom training step
+            # loss.backward()
+            self.module_.run_rhc_single_step(self, loss, Xi, yi, **fit_params)
+            return {
+                'loss': loss,
+                'y_pred': y_pred,
+            }
