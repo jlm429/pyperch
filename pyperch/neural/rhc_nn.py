@@ -10,16 +10,20 @@ import copy
 
 
 class RHCModule(nn.Module):
-    def __init__(self, input_dim=20, output_dim=2, num_units=10, nonlin=nn.ReLU()):
+    def __init__(self, input_dim=20, output_dim=2, hidden_units=10, nonlin=nn.ReLU()):
         super().__init__()
 
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.hidden_units = hidden_units
+
         #any input params can automagically be grid searched
-        #TODO: add RHC specific params
-        self.dense0 = nn.Linear(input_dim, num_units)
+        #TODO: add RHC specific params/add ability to dynamically add hidden layers
+        self.dense0 = nn.Linear(self.input_dim, self.hidden_units)
         self.nonlin = nonlin
         self.dropout = nn.Dropout(0.5)
-        self.dense1 = nn.Linear(num_units, num_units)
-        self.output = nn.Linear(num_units, output_dim)
+        self.dense1 = nn.Linear(self.hidden_units, self.hidden_units)
+        self.output = nn.Linear(self.hidden_units, self.output_dim)
         self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, X, **kwargs):
@@ -29,23 +33,44 @@ class RHCModule(nn.Module):
         X = self.softmax(self.output(X))
         return X
 
-    #warning: this is only a POC for replacing the backprop training step
-    def run_rhc_single_step(self, net, old_loss, X_train, y_train, **fit_params):
-        # TODO: Call RHC function and pass weight vector instead of randomly changing the weights
-        for param in net.module_.parameters():
-            param.data += torch.randn(param.data.size())
+    def run_rhc_single_step(self, net, X_train, y_train, **fit_params):
+        previous_model = copy.deepcopy(net.module_)
+
+        #calc old loss
+        y_pred = net.infer(X_train, **fit_params)
+        old_loss = net.get_loss(y_pred, y_train, X_train, training=False)
+
+        lr=.1
+        #todo: randomly select tensor instead of hidden only
+        #todo: optimize
+        input_dim = np.random.randint(0, self.hidden_units)
+        output_dim = np.random.randint(0, self.hidden_units)
+        neighbor = lr * np.random.choice([-1, 1])
+
+        with torch.no_grad():
+            net.module_.dense1.weight[input_dim][output_dim] = neighbor + net.module_.dense1.weight[input_dim][output_dim].data
+
+        # Evaluate the new loss
+        y_pred = net.infer(X_train, **fit_params)
+        new_loss = net.get_loss(y_pred, y_train, X_train, training=False)
+        loss = new_loss
+
+        # Revert to old weights if new loss is higher
+        if new_loss > old_loss:
+            net.module_ = copy.deepcopy(previous_model)
+            loss = old_loss
+
+        return loss, y_pred
 
     @staticmethod
     def register_rhc_training_step():
         @add_to(NeuralNet)
         def train_step_single(self, batch, **fit_params):
-            self._set_training(True)
-            Xi, yi = unpack_data(batch)
-            y_pred = self.infer(Xi, **fit_params)
-            loss = self.get_loss(y_pred, yi, X=Xi, training=True)
             # disable backprop and run custom training step
+            self._set_training(False)
+            Xi, yi = unpack_data(batch)
             # loss.backward()
-            self.module_.run_rhc_single_step(self, loss, Xi, yi, **fit_params)
+            loss, y_pred = self.module_.run_rhc_single_step(self, Xi, yi, **fit_params)
             return {
                 'loss': loss,
                 'y_pred': y_pred,
