@@ -8,7 +8,7 @@ import copy
 
 
 class RHCModule(nn.Module):
-    def __init__(self, input_dim=20, output_dim=2, hidden_units=10, hidden_layers=1,
+    def __init__(self, input_dim, output_dim, hidden_units=10, hidden_layers=1,
                  dropout_percent=0, lr=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
         super().__init__()
         self.input_dim = input_dim
@@ -18,25 +18,24 @@ class RHCModule(nn.Module):
         self.dropout = nn.Dropout(dropout_percent)
         self.lr = lr
         self.activation = activation
-        self.softmax = output_activation
+        self.output_activation = output_activation
         self.layers = nn.ModuleList()
-
-        # TODO add GPU option
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # input layer
-        self.layers.append(nn.Linear(self.input_dim, self.hidden_units))
+        self.layers.append(nn.Linear(self.input_dim, self.hidden_units, device=self.device))
         # hidden layers
         for layer in range(self.hidden_layers):
-            self.layers.append(nn.Linear(self.hidden_units, self.hidden_units))
+            self.layers.append(nn.Linear(self.hidden_units, self.hidden_units, device=self.device))
         # output layer
-        self.layers.append(nn.Linear(self.hidden_units, self.output_dim))
+        self.layers.append(nn.Linear(self.hidden_units, self.output_dim, device=self.device))
 
     def forward(self, X, **kwargs):
         X = self.activation(self.layers[0](X))
         X = self.dropout(X)
         for i in range(self.hidden_layers):
             X = self.activation(self.layers[i+1](X))
-        X = self.softmax(self.layers[self.hidden_layers+1](X))
+        X = self.output_activation(self.layers[self.hidden_layers+1](X))
         return X
 
     def run_rhc_single_step(self, net, X_train, y_train, **fit_params):
