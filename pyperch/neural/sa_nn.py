@@ -8,20 +8,16 @@ import copy
 import math
 
 
-#use numpy instead for seeding
-import random
-
-
 class SAModule(nn.Module):
     def __init__(self, input_dim, output_dim, t=10000, cooling=.95, hidden_units=10, hidden_layers=1,
-                 dropout_percent=0, lr=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+                 dropout_percent=0, step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_units = hidden_units
         self.hidden_layers = hidden_layers
         self.dropout = nn.Dropout(dropout_percent)
-        self.lr = lr
+        self.step_size = step_size
         self.activation = activation
         self.output_activation = output_activation
         self.layers = nn.ModuleList()
@@ -53,14 +49,11 @@ class SAModule(nn.Module):
         y_pred = net.infer(X_train, **fit_params)
         old_loss = net.get_loss(y_pred, y_train, X_train, training=False)
 
-        # set RHC step size = lr
-        step_size = self.lr
-
         # select random layer
         layer = np.random.randint(0, len(self.layers))-1
         input_dim = np.random.randint(0, net.module_.layers[layer].weight.shape[0])
         output_dim = np.random.randint(0, net.module_.layers[layer].weight.shape[1])
-        neighbor = step_size * np.random.choice([-1, 1])
+        neighbor = self.step_size * np.random.choice([-1, 1])
 
         with torch.no_grad():
             net.module_.layers[layer].weight[input_dim][output_dim] = neighbor + \
@@ -75,7 +68,7 @@ class SAModule(nn.Module):
         delta = new_loss - old_loss
 
         # If the new solution is better or with probability e^(delta/temperature), accept it
-        if new_loss > old_loss and random.random() >= math.exp(-delta / self.t):
+        if new_loss > old_loss and np.random.rand() >= math.exp(-delta / self.t):
             net.module_ = copy.deepcopy(previous_model)
             loss = old_loss
 
