@@ -79,7 +79,7 @@ class SAModule(nn.Module):
 
     def forward(self, X, **kwargs):
         """
-        Recipe for the forward pass is defined within this function.
+        Recipe for the forward pass.
 
         PARAMETERS:
 

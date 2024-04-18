@@ -1,3 +1,10 @@
+"""
+Author: John Mansfield
+BSD 3-Clause License
+
+RHCModule class: create a neural network model to be used with randomized hill climbing optimization of weights.
+"""
+
 import numpy as np
 import torch
 from torch import nn
@@ -10,6 +17,37 @@ import copy
 class RHCModule(nn.Module):
     def __init__(self, input_dim, output_dim, hidden_units=10, hidden_layers=1,
                  dropout_percent=0, step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+        """
+
+        Initialize the neural network.
+
+        PARAMETERS:
+
+        input_dim {int}:
+            Number of features/dimension of the input.  Must be greater than 0.
+
+        output_dim {int}:
+            Number of classes/output dimension of the model. Must be greater than 0.
+
+        hidden_units {int}:
+            Number of hidden units.
+
+        hidden_layers {int}:
+            Number of hidden layers.
+
+        dropout_percent {float}:
+            Probability of an element to be zeroed.
+
+        step_size {float}:
+            Step size for hill climbing.
+
+        activation {torch.nn.modules.activation}:
+            Activation function.
+
+        output_activation {torch.nn.modules.activation}:
+            Output activation.
+
+        """
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -31,6 +69,19 @@ class RHCModule(nn.Module):
         self.layers.append(nn.Linear(self.hidden_units, self.output_dim, device=self.device))
 
     def forward(self, X, **kwargs):
+        """
+        Recipe for the forward pass.
+
+        PARAMETERS:
+
+        X {torch.tensor}:
+            NN input data. Shape (batch_size, input_dim).
+
+        RETURNS:
+
+        X {torch.tensor}:
+            NN output data. Shape (batch_size, output_dim).
+        """
         X = self.activation(self.layers[0](X))
         X = self.dropout(X)
         for i in range(self.hidden_layers):
@@ -39,6 +90,28 @@ class RHCModule(nn.Module):
         return X
 
     def run_rhc_single_step(self, net, X_train, y_train, **fit_params):
+        """
+        RHC training step
+
+        PARAMETERS:
+
+        net {skorch.classifier.NeuralNetClassifier}:
+            Skorch NeuralNetClassifier.
+
+        X_train {torch.tensor}:
+            Training data.
+
+        y_train {torch.tensor}:
+            Training labels.
+
+        RETURNS:
+
+        loss {torch.tensor}:
+            Single step loss.
+
+        y_pred {torch.tensor}:
+            Predicted labels.
+        """
         # copy weights
         previous_model = copy.deepcopy(net.module_)
 
@@ -70,6 +143,9 @@ class RHCModule(nn.Module):
 
     @staticmethod
     def register_rhc_training_step():
+        """
+        train_step_single override - add RHC training step and disable backprop
+        """
         @add_to(NeuralNet)
         def train_step_single(self, batch, **fit_params):
             self._set_training(False)
