@@ -1,3 +1,10 @@
+"""
+Author: John Mansfield
+BSD 3-Clause License
+
+SAModule class: create a neural network model to be used with simulated annealing randomized optimization of weights.
+"""
+
 import numpy as np
 import torch
 from torch import nn
@@ -11,6 +18,43 @@ import math
 class SAModule(nn.Module):
     def __init__(self, input_dim, output_dim, t=10000, cooling=.95, hidden_units=10, hidden_layers=1,
                  dropout_percent=0, step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+        """
+
+        Initialize the neural network.
+
+        PARAMETERS:
+
+        input_dim {int}:
+            Number of features/dimension of the input.  Must be greater than 0.
+
+        output_dim {int}:
+            Number of classes/output dimension of the model. Must be greater than 0.
+
+        t {int}:
+            SA temperature.
+
+        cooling {float}:
+            Cooling rate.
+
+        hidden_units {int}:
+            Number of hidden units.
+
+        hidden_layers {int}:
+            Number of hidden layers.
+
+        dropout_percent {float}:
+            Probability of an element to be zeroed.
+
+        step_size {float}:
+            Step size for hill climbing.
+
+        activation {torch.nn.modules.activation}:
+            Activation function.
+
+        output_activation {torch.nn.modules.activation}:
+            Output activation.
+
+        """
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -34,6 +78,19 @@ class SAModule(nn.Module):
         self.layers.append(nn.Linear(self.hidden_units, self.output_dim, device=self.device))
 
     def forward(self, X, **kwargs):
+        """
+        Recipe for the forward pass is defined within this function.
+
+        PARAMETERS:
+
+        X {torch.tensor}:
+            NN input data. Shape (batch_size, input_dim).
+
+        RETURNS:
+
+        X {torch.tensor}:
+            NN output data. Shape (batch_size, output_dim).
+        """
         X = self.activation(self.layers[0](X))
         X = self.dropout(X)
         for i in range(self.hidden_layers):
@@ -42,6 +99,28 @@ class SAModule(nn.Module):
         return X
 
     def run_sa_single_step(self, net, X_train, y_train, **fit_params):
+        """
+        SA training step
+
+        PARAMETERS:
+
+        net {skorch.classifier.NeuralNetClassifier}:
+            Skorch NeuralNetClassifier.
+
+        X_train {torch.tensor}:
+            Training data.
+
+        y_train {torch.tensor}:
+            Training labels.
+
+        RETURNS:
+
+        loss {torch.tensor}:
+            Single step loss.
+
+        y_pred {torch.tensor}:
+            Predicted labels.
+        """
         # copy weights
         previous_model = copy.deepcopy(net.module_)
 
@@ -77,6 +156,9 @@ class SAModule(nn.Module):
 
     @staticmethod
     def register_sa_training_step():
+        """
+        train_step_single override - add SA training step and disable backprop
+        """
         @add_to(NeuralNet)
         def train_step_single(self, batch, **fit_params):
             self._set_training(False)
