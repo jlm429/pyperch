@@ -1,0 +1,5 @@
+skorch==0.15.0
+torch>=2.2, <=2.3
+numpy
+tqdm
+matplotlib
