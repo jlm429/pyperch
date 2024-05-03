@@ -112,12 +112,12 @@ class RHCModule(nn.Module):
         y_pred {torch.tensor}:
             Predicted labels.
         """
-        # copy weights
-        previous_model = copy.deepcopy(net.module_)
+        # save weights
+        net.save_params(f_params='rhc_model_params.pt', f_optimizer='rhc_optimizer_params.pt')
 
-        # calc old loss
+        # calc current loss
         y_pred = net.infer(X_train, **fit_params)
-        old_loss = net.get_loss(y_pred, y_train, X_train, training=False)
+        loss = net.get_loss(y_pred, y_train, X_train, training=False)
 
         # select random layer
         layer = np.random.randint(0, len(self.layers))-1
@@ -130,16 +130,16 @@ class RHCModule(nn.Module):
                 net.module_.layers[layer].weight[input_dim][output_dim].data
 
         # Evaluate new loss
-        y_pred = net.infer(X_train, **fit_params)
-        new_loss = net.get_loss(y_pred, y_train, X_train, training=False)
-        loss = new_loss
+        new_y_pred = net.infer(X_train, **fit_params)
+        new_loss = net.get_loss(new_y_pred, y_train, X_train, training=False)
 
         # Revert to old weights if new loss is higher
-        if new_loss > old_loss:
-            net.module_ = copy.deepcopy(previous_model)
-            loss = old_loss
+        if new_loss > loss:
+            net.load_params(f_params='rhc_model_params.pt', f_optimizer='rhc_optimizer_params.pt')
+            new_y_pred = y_pred
+            new_loss = loss
 
-        return loss, y_pred
+        return new_loss, new_y_pred
 
     @staticmethod
     def register_rhc_training_step():

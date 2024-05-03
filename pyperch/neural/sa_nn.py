@@ -122,11 +122,11 @@ class SAModule(nn.Module):
             Predicted labels.
         """
         # copy weights
-        previous_model = copy.deepcopy(net.module_)
+        net.save_params(f_params='sa_model_params.pt', f_optimizer='sa_optimizer_params.pt')
 
         # calc old loss
         y_pred = net.infer(X_train, **fit_params)
-        old_loss = net.get_loss(y_pred, y_train, X_train, training=False)
+        loss = net.get_loss(y_pred, y_train, X_train, training=False)
 
         # select random layer
         layer = np.random.randint(0, len(self.layers))-1
@@ -139,20 +139,20 @@ class SAModule(nn.Module):
                 net.module_.layers[layer].weight[input_dim][output_dim].data
 
         # Evaluate new loss
-        y_pred = net.infer(X_train, **fit_params)
-        new_loss = net.get_loss(y_pred, y_train, X_train, training=False)
-        loss = new_loss
+        new_y_pred = net.infer(X_train, **fit_params)
+        new_loss = net.get_loss(new_y_pred, y_train, X_train, training=False)
 
         # Calculate the change in objective function value
-        delta = new_loss - old_loss
+        delta = new_loss - loss
 
         # If the new solution is better or with probability e^(delta/temperature), accept it
-        if new_loss > old_loss and np.random.rand() >= math.exp(-delta / self.t):
-            net.module_ = copy.deepcopy(previous_model)
-            loss = old_loss
+        if new_loss > loss and np.random.rand() >= math.exp(-delta / self.t):
+            net.load_params(f_params='sa_model_params.pt', f_optimizer='sa_optimizer_params.pt')
+            new_y_pred = y_pred
+            new_loss = loss
 
-        self.t = self.cooling * self.t;
-        return loss, y_pred
+        self.t = self.cooling * self.t
+        return new_loss, new_y_pred
 
     @staticmethod
     def register_sa_training_step():
