@@ -1,3 +1,4 @@
+*.pt
 *.py[co]
 *~
 *.jython_cache
