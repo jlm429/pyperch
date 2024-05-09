@@ -64,13 +64,13 @@ class GAModule(nn.Module):
                 initial_population.append(new_model)
         return initial_population
 
-    def evaluate(self, individual, criterion):
+    def evaluate(self, individual, criterion, data, targets):
         # criterion = torch.nn.CrossEntropyLoss()
         # criterion = net.criterion
         individual.eval()
         with torch.no_grad():
-            outputs = individual(self.data)
-            loss = criterion(outputs, self.targets)
+            outputs = individual(data)
+            loss = criterion(outputs, targets)
         return -loss.item()
 
     def mate(self, parent1, parent2):
@@ -90,24 +90,22 @@ class GAModule(nn.Module):
                     param.data += noise
 
     def run_ga_single_step(self, net, X_train, y_train, **fit_params):
-        # copy weights
-        #net.save_params(f_params='sa_model_params.pt', f_optimizer='sa_optimizer_params.pt')
 
         # calc old loss
         y_pred = net.infer(X_train, **fit_params)
         loss = net.get_loss(y_pred, y_train, X_train, training=False)
 
         model = net.module_
-        self.data = X_train
-        self.targets = y_train
+        data = X_train
+        targets = y_train
 
         if self.population is None:
             self.population = self.generate_initial_population(self.population_size, model)
 
-        self.values = np.array([self.evaluate(individual, net.criterion) for individual in self.population])
+        values = np.array([self.evaluate(individual, net.criterion, data, targets) for individual in self.population])
 
         # Calculate probabilities for selection based on fitness
-        fitness = np.array(self.values)
+        fitness = np.array(values)
         probabilities = fitness - fitness.min()
         if probabilities.sum() > 0:
             probabilities /= probabilities.sum()
@@ -129,7 +127,7 @@ class GAModule(nn.Module):
         for i in range(self.to_mate, self.population_size):
             index = np.random.choice(self.population_size, p=probabilities)
             new_population.append(deepcopy(self.population[index]))
-            new_values[i] = self.values[index]
+            new_values[i] = values[index]
 
         # Mutation phase
         for i in range(self.to_mutate):
@@ -140,18 +138,15 @@ class GAModule(nn.Module):
         # Re-evaluate new population
         for i in range(self.population_size):
             if new_values[i] == -1:
-                new_values[i] = self.evaluate(new_population[i], net.criterion)
+                new_values[i] = self.evaluate(new_population[i], net.criterion, data, targets)
 
         self.population = new_population
-        self.values = new_values
-        best_fitness = -np.min(self.values)
-        best_fitness_index = np.argmin(self.values)
-
-        #print(f"Best Fitness {best_fitness}")
-        #print(f"loss {loss}")
+        values = new_values
+        best_fitness_index = np.argmin(values)
 
         old_model = net.module_
         net.module_ = deepcopy(self.population[best_fitness_index])
+
         # calc new loss
         new_y_pred = net.infer(X_train, **fit_params)
         new_loss = net.get_loss(new_y_pred, y_train, X_train, training=False)
@@ -160,18 +155,6 @@ class GAModule(nn.Module):
             net.module_ = deepcopy(old_model)
             new_y_pred = y_pred
             new_loss = loss
-            #print("swap models", best_fitness_index, best_fitness, self.evaluate(self.population[best_fitness_index]))
-            #todo: optimize
-            #todo: undo unecessary deepcopy above - only copy when new model is better
-            #todo: consider option to regenerate init population during training
-
-            #net.module_ = deepcopy(self.population[best_fitness_index])
-            #print(f"old loss {loss}")
-            # calc new loss
-            #y_pred = net.infer(X_train, **fit_params)
-            #loss = net.get_loss(y_pred, y_train, X_train, training=False)
-            #print("swap models, best fitness", best_fitness)
-            #print(f"new loss {loss}")
 
         return new_loss, new_y_pred
 
