@@ -64,8 +64,9 @@ class GAModule(nn.Module):
                 initial_population.append(new_model)
         return initial_population
 
-    def evaluate(self, individual):
-        criterion = torch.nn.CrossEntropyLoss()
+    def evaluate(self, individual, criterion):
+        # criterion = torch.nn.CrossEntropyLoss()
+        # criterion = net.criterion
         individual.eval()
         with torch.no_grad():
             outputs = individual(self.data)
@@ -103,8 +104,7 @@ class GAModule(nn.Module):
         if self.population is None:
             self.population = self.generate_initial_population(self.population_size, model)
 
-        #todo: pass loss function / criterion as parameter net.criterion
-        self.values = np.array([self.evaluate(individual) for individual in self.population])
+        self.values = np.array([self.evaluate(individual, net.criterion) for individual in self.population])
 
         # Calculate probabilities for selection based on fitness
         fitness = np.array(self.values)
@@ -140,7 +140,7 @@ class GAModule(nn.Module):
         # Re-evaluate new population
         for i in range(self.population_size):
             if new_values[i] == -1:
-                new_values[i] = self.evaluate(new_population[i])
+                new_values[i] = self.evaluate(new_population[i], net.criterion)
 
         self.population = new_population
         self.values = new_values
