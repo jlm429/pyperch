@@ -112,10 +112,10 @@ class GAModule(nn.Module):
 
         Parameters:
 
-        size (int):
+        size {int}:
             The size of the population to generate.
 
-        model (torch.nn.Module):
+        model {torch.nn.Module}:
             The neural network model to be used to create the initial population.
 
         Returns:
@@ -137,7 +137,7 @@ class GAModule(nn.Module):
 
         Parameters:
 
-        individual (torch.nn.Module):
+        individual {torch.nn.Module}:
             The neural network model to evaluate.
 
         Returns:
@@ -156,10 +156,10 @@ class GAModule(nn.Module):
 
         Parameters:
 
-        parent1 (torch.nn.Module):
+        parent1 {torch.nn.Module}:
             The first parent model.
 
-        parent2 (torch.nn.Module):
+        parent2 {torch.nn.Module}:
             The second parent model.
 
         Returns:
@@ -178,7 +178,7 @@ class GAModule(nn.Module):
 
         Parameters:
 
-        individual (torch.nn.Module):
+        individual {torch.nn.Module}:
             The model to mutate.
         """
         mutation_strength = 0.1
