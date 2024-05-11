@@ -38,7 +38,7 @@ class GAModule(nn.Module):
          to_mate {int}:
              GA size of population to mate each time step.
 
-        to_mutate {int}:
+         to_mutate {int}:
              GA size of population to mutate each time step.
 
          hidden_units {int}:
@@ -106,6 +106,21 @@ class GAModule(nn.Module):
         return X
 
     def generate_initial_population(self, size, model):
+        """
+        Generates an initial population of neural network models by introducing slight variations to
+        the given model's weights.
+
+        Parameters:
+
+        size (int):
+            The size of the population to generate.
+
+        model (torch.nn.Module):
+            The neural network model to be used to create the initial population.
+
+        Returns:
+            A list of neural network models that form the initial population.
+        """
         initial_population = []
         with torch.no_grad():
             for _ in range(size):
@@ -117,8 +132,17 @@ class GAModule(nn.Module):
         return initial_population
 
     def evaluate(self, individual, criterion, data, targets):
-        # criterion = torch.nn.CrossEntropyLoss()
-        # criterion = net.criterion
+        """
+        Evaluates a given neural network model's performance by calculating its fitness based on how well it predicts the target values from the given data.
+
+        Parameters:
+
+        individual (torch.nn.Module):
+            The neural network model to evaluate.
+
+        Returns:
+            The fitness score (negative loss) of the model.
+        """
         individual.eval()
         with torch.no_grad():
             outputs = individual(data)
@@ -126,6 +150,21 @@ class GAModule(nn.Module):
         return -loss.item()
 
     def mate(self, parent1, parent2):
+        """
+        Combines weights of two parent models using uniform crossover. Each gene (nn weight) from the child
+        model is selected randomly from one of the two parents with equal probability.
+
+        Parameters:
+
+        parent1 (torch.nn.Module):
+            The first parent model.
+
+        parent2 (torch.nn.Module):
+            The second parent model.
+
+        Returns:
+            A new neural network model that is a combination of weights from both parents.
+        """
         child = deepcopy(parent1)
         for child_param, parent1_param, parent2_param in zip(child.parameters(), parent1.parameters(), parent2.parameters()):
             if len(child_param.shape) > 1:  # mate weights
@@ -134,6 +173,14 @@ class GAModule(nn.Module):
         return child
 
     def mutate(self, individual):
+        """
+        Introduces random mutations to the neural net weights.
+
+        Parameters:
+
+        individual (torch.nn.Module):
+            The model to mutate.
+        """
         mutation_strength = 0.1
         for param in individual.parameters():
             if len(param.shape) > 1:  # mutate weights
@@ -142,7 +189,28 @@ class GAModule(nn.Module):
                     param.data += noise
 
     def run_ga_single_step(self, net, X_train, y_train, **fit_params):
+        """
+        GA training step
 
+        PARAMETERS:
+
+        net {skorch.classifier.NeuralNetClassifier}:
+            Skorch NeuralNetClassifier.
+
+        X_train {torch.tensor}:
+            Training data.
+
+        y_train {torch.tensor}:
+            Training labels.
+
+        RETURNS:
+
+        loss {torch.tensor}:
+            Single step loss.
+
+        y_pred {torch.tensor}:
+            Predicted labels.
+        """
         # calc old loss
         y_pred = net.infer(X_train, **fit_params)
         loss = net.get_loss(y_pred, y_train, X_train, training=False)
@@ -166,7 +234,6 @@ class GAModule(nn.Module):
 
         new_population = []
         new_values = np.zeros(self.population_size)
-
 
         # Mate phase
         for i in range(self.to_mate):
@@ -203,6 +270,7 @@ class GAModule(nn.Module):
         new_y_pred = net.infer(X_train, **fit_params)
         new_loss = net.get_loss(new_y_pred, y_train, X_train, training=False)
 
+        # Revert to old weights if new loss is higher
         if new_loss > loss:
             net.module_ = deepcopy(old_model)
             new_y_pred = y_pred
