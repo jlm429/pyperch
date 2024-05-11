@@ -3,6 +3,10 @@ Author: John Mansfield
 BSD 3-Clause License
 
 RHCModule class: create a neural network model to be used with randomized hill climbing optimization of weights.
+
+Inspired by ABAGAIL - neural net RHC implementation.
+
+https://github.com/pushkar/ABAGAIL/blob/master/src/func/nn/OptNetworkBuilder.java
 """
 
 import numpy as np

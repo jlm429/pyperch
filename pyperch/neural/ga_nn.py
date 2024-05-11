@@ -20,7 +20,46 @@ from copy import deepcopy
 class GAModule(nn.Module):
     def __init__(self, input_dim, output_dim, population_size=300, to_mate=150, to_mutate=50, hidden_units=10, hidden_layers=1,
                  dropout_percent=0, step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+        """
 
+         Initialize the neural network.
+
+         PARAMETERS:
+
+         input_dim {int}:
+             Number of features/dimension of the input.  Must be greater than 0.
+
+         output_dim {int}:
+             Number of classes/output dimension of the model. Must be greater than 0.
+
+         population_size {int}:
+             GA population size.  Must be greater than 0.
+
+         to_mate {int}:
+             GA size of population to mate each time step.
+
+        to_mutate {int}:
+             GA size of population to mutate each time step.
+
+         hidden_units {int}:
+             Number of hidden units.
+
+         hidden_layers {int}:
+             Number of hidden layers.
+
+         dropout_percent {float}:
+             Probability of an element to be zeroed.
+
+         step_size {float}:
+             Step size for hill climbing.
+
+         activation {torch.nn.modules.activation}:
+             Activation function.
+
+         output_activation {torch.nn.modules.activation}:
+             Output activation.
+
+         """
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -46,6 +85,19 @@ class GAModule(nn.Module):
         self.layers.append(nn.Linear(self.hidden_units, self.output_dim, device=self.device))
 
     def forward(self, X, **kwargs):
+        """
+        Recipe for the forward pass.
+
+        PARAMETERS:
+
+        X {torch.tensor}:
+            NN input data. Shape (batch_size, input_dim).
+
+        RETURNS:
+
+        X {torch.tensor}:
+            NN output data. Shape (batch_size, output_dim).
+        """
         X = self.activation(self.layers[0](X))
         X = self.dropout(X)
         for i in range(self.hidden_layers):
