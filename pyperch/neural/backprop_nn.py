@@ -7,6 +7,9 @@ Backprop class: create a backprop neural network model.
 
 import torch
 from torch import nn
+from pyperch.utils.decorators import add_to
+from skorch.dataset import unpack_data
+from skorch import NeuralNet
 
 
 class BackpropModule(nn.Module):
@@ -41,6 +44,7 @@ class BackpropModule(nn.Module):
 
         """
         super().__init__()
+        BackpropModule.register_backprop_training_step()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_units = hidden_units
@@ -75,7 +79,25 @@ class BackpropModule(nn.Module):
         """
         X = self.activation(self.layers[0](X))
         X = self.dropout(X)
-        for i in range(self.hidden_layers):
-            X = self.activation(self.layers[i+1](X))
+        for i in range(1, self.hidden_layers+1):
+            X = self.activation(self.layers[i](X))
+            X = self.dropout(X)
         X = self.output_activation(self.layers[self.hidden_layers+1](X))
         return X
+
+    @staticmethod
+    def register_backprop_training_step():
+        """
+        train_step_single override - revert to backprop
+        """
+        @add_to(NeuralNet)
+        def train_step_single(self, batch, **fit_params):
+            self._set_training(True)
+            Xi, yi = unpack_data(batch)
+            y_pred = self.infer(Xi, **fit_params)
+            loss = self.get_loss(y_pred, yi, X=Xi, training=True)
+            loss.backward()
+            return {
+                'loss': loss,
+                'y_pred': y_pred,
+            }

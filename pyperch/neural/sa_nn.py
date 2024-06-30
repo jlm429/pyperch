@@ -98,8 +98,9 @@ class SAModule(nn.Module):
         """
         X = self.activation(self.layers[0](X))
         X = self.dropout(X)
-        for i in range(self.hidden_layers):
-            X = self.activation(self.layers[i+1](X))
+        for i in range(1, self.hidden_layers+1):
+            X = self.activation(self.layers[i](X))
+            X = self.dropout(X)
         X = self.output_activation(self.layers[self.hidden_layers+1](X))
         return X
 
@@ -166,7 +167,7 @@ class SAModule(nn.Module):
         """
         @add_to(NeuralNet)
         def train_step_single(self, batch, **fit_params):
-            self._set_training(False)
+            self._set_training(True)
             Xi, yi = unpack_data(batch)
             # disable backprop and run custom training step
             # loss.backward()
