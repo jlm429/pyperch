@@ -18,19 +18,16 @@ from copy import deepcopy
 
 
 class GAModule(nn.Module):
-    def __init__(self, input_dim, output_dim, population_size=300, to_mate=150, to_mutate=50, hidden_units=10, hidden_layers=1,
-                 dropout_percent=0, step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+    def __init__(self, layer_sizes, population_size=300, to_mate=150, to_mutate=50, dropout_percent=0,
+                 step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
         """
 
          Initialize the neural network.
 
          PARAMETERS:
 
-         input_dim {int}:
-             Number of features/dimension of the input.  Must be greater than 0.
-
-         output_dim {int}:
-             Number of classes/output dimension of the model. Must be greater than 0.
+         layer_sizes {array-like}:
+             Sizes of all layers including input, hidden, and output layers. Must be a tuple or list of integers.
 
          population_size {int}:
              GA population size.  Must be greater than 0.
@@ -41,17 +38,11 @@ class GAModule(nn.Module):
          to_mutate {int}:
              GA size of population to mutate each time step.
 
-         hidden_units {int}:
-             Number of hidden units.
-
-         hidden_layers {int}:
-             Number of hidden layers.
-
          dropout_percent {float}:
              Probability of an element to be zeroed.
 
          step_size {float}:
-             Step size for hill climbing.
+             Step size for mutation strength
 
          activation {torch.nn.modules.activation}:
              Activation function.
@@ -62,10 +53,7 @@ class GAModule(nn.Module):
          """
         super().__init__()
         GAModule.register_ga_training_step()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-        self.hidden_units = hidden_units
-        self.hidden_layers = hidden_layers
+        self.layer_sizes = layer_sizes
         self.dropout = nn.Dropout(dropout_percent)
         self.step_size = step_size
         self.activation = activation
@@ -77,13 +65,9 @@ class GAModule(nn.Module):
         self.to_mutate = to_mutate
         self.population = None
 
-        # input layer
-        self.layers.append(nn.Linear(self.input_dim, self.hidden_units, device=self.device))
-        # hidden layers
-        for layer in range(self.hidden_layers):
-            self.layers.append(nn.Linear(self.hidden_units, self.hidden_units, device=self.device))
-        # output layer
-        self.layers.append(nn.Linear(self.hidden_units, self.output_dim, device=self.device))
+        # Create layers based on layer_sizes
+        for i in range(len(self.layer_sizes) - 1):
+            self.layers.append(nn.Linear(self.layer_sizes[i], self.layer_sizes[i + 1], device=self.device))
 
     def forward(self, X, **kwargs):
         """
@@ -99,12 +83,10 @@ class GAModule(nn.Module):
         X {torch.tensor}:
             NN output data. Shape (batch_size, output_dim).
         """
-        X = self.activation(self.layers[0](X))
-        X = self.dropout(X)
-        for i in range(1, self.hidden_layers+1):
+        for i in range(len(self.layers) - 1):
             X = self.activation(self.layers[i](X))
             X = self.dropout(X)
-        X = self.output_activation(self.layers[self.hidden_layers+1](X))
+        X = self.output_activation(self.layers[-1](X))
         return X
 
     def generate_initial_population(self, size, model):
@@ -183,7 +165,7 @@ class GAModule(nn.Module):
         individual {torch.nn.Module}:
             The model to mutate.
         """
-        mutation_strength = 0.1
+        mutation_strength = self.step_size
         for param in individual.parameters():
             if len(param.shape) > 1:  # mutate weights
                 if np.random.rand() < mutation_strength:

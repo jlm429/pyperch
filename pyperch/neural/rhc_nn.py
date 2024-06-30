@@ -19,25 +19,16 @@ import copy
 
 
 class RHCModule(nn.Module):
-    def __init__(self, input_dim, output_dim, hidden_units=10, hidden_layers=1,
-                 dropout_percent=0, step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+    def __init__(self, layer_sizes, dropout_percent=0, step_size=.1, activation=nn.ReLU(),
+                 output_activation=nn.Softmax(dim=-1)):
         """
 
         Initialize the neural network.
 
         PARAMETERS:
 
-        input_dim {int}:
-            Number of features/dimension of the input.  Must be greater than 0.
-
-        output_dim {int}:
-            Number of classes/output dimension of the model. Must be greater than 0.
-
-        hidden_units {int}:
-            Number of hidden units.
-
-        hidden_layers {int}:
-            Number of hidden layers.
+        layer_sizes {array-like}:
+            Sizes of all layers including input, hidden, and output layers. Must be a tuple or list of integers.
 
         dropout_percent {float}:
             Probability of an element to be zeroed.
@@ -54,10 +45,7 @@ class RHCModule(nn.Module):
         """
         super().__init__()
         RHCModule.register_rhc_training_step()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
-        self.hidden_units = hidden_units
-        self.hidden_layers = hidden_layers
+        self.layer_sizes = layer_sizes
         self.dropout = nn.Dropout(dropout_percent)
         self.step_size = step_size
         self.activation = activation
@@ -65,13 +53,9 @@ class RHCModule(nn.Module):
         self.layers = nn.ModuleList()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # input layer
-        self.layers.append(nn.Linear(self.input_dim, self.hidden_units, device=self.device))
-        # hidden layers
-        for layer in range(self.hidden_layers):
-            self.layers.append(nn.Linear(self.hidden_units, self.hidden_units, device=self.device))
-        # output layer
-        self.layers.append(nn.Linear(self.hidden_units, self.output_dim, device=self.device))
+        # Create layers based on layer_sizes
+        for i in range(len(self.layer_sizes) - 1):
+            self.layers.append(nn.Linear(self.layer_sizes[i], self.layer_sizes[i + 1], device=self.device))
 
     def forward(self, X, **kwargs):
         """
@@ -87,12 +71,10 @@ class RHCModule(nn.Module):
         X {torch.tensor}:
             NN output data. Shape (batch_size, output_dim).
         """
-        X = self.activation(self.layers[0](X))
-        X = self.dropout(X)
-        for i in range(1, self.hidden_layers+1):
+        for i in range(len(self.layers) - 1):
             X = self.activation(self.layers[i](X))
             X = self.dropout(X)
-        X = self.output_activation(self.layers[self.hidden_layers+1](X))
+        X = self.output_activation(self.layers[-1](X))
         return X
 
     def run_rhc_single_step(self, net, X_train, y_train, **fit_params):
