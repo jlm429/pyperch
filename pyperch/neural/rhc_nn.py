@@ -53,6 +53,7 @@ class RHCModule(nn.Module):
 
         """
         super().__init__()
+        RHCModule.register_rhc_training_step()
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.hidden_units = hidden_units
