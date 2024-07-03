@@ -4,8 +4,8 @@
 ## Getting Started
 
 ### About
-pyperch - Neural Network Weight Optimization, has been developed to support students taking Georgia Tech’s graduate computer science machine learning course. 
-pyperch implements three random optimization algorithms—Randomized Hill Climbing, Simulated Annealing, and Genetic Algorithm—which can be used as drop-in replacements for traditional gradient-based optimizers in PyTorch.
+pyperch is a neural network weight optimization package developed to support students taking Georgia Tech’s graduate machine learning course CS7641. 
+pyperch implements three random optimization algorithms—randomized hill climbing, simulated annealing, and a genetic algorithm—which can be used as drop-in replacements for traditional gradient-based optimizers in PyTorch.
 ### Install 
 
 pip install pyperch.   
@@ -14,7 +14,7 @@ pip install pyperch.
 pip install pyperch
 ```
 
-For starter code and examples, see [pyperch/notebooks](notebooks/). 
+For starter code and examples, see [pyperch/notebooks](notebooks). 
 
 ## Contributing
 
