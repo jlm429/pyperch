@@ -101,7 +101,8 @@ class RHCModule(nn.Module):
             Predicted labels.
         """
         # save weights
-        net.save_params(f_params='rhc_model_params.pt', f_optimizer='rhc_optimizer_params.pt')
+        # net.save_params(f_params='rhc_model_params.pt', f_optimizer='rhc_optimizer_params.pt')
+        previous_model = copy.deepcopy(net.module_)
 
         # calc current loss
         y_pred = net.infer(X_train, **fit_params)
@@ -123,7 +124,8 @@ class RHCModule(nn.Module):
 
         # Revert to old weights if new loss is higher
         if new_loss > loss:
-            net.load_params(f_params='rhc_model_params.pt', f_optimizer='rhc_optimizer_params.pt')
+            #net.load_params(f_params='rhc_model_params.pt', f_optimizer='rhc_optimizer_params.pt')
+            net.module_ = copy.deepcopy(previous_model)
             new_y_pred = y_pred
             new_loss = loss
 

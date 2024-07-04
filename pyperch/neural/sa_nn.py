@@ -110,7 +110,8 @@ class SAModule(nn.Module):
             Predicted labels.
         """
         # copy weights
-        net.save_params(f_params='sa_model_params.pt', f_optimizer='sa_optimizer_params.pt')
+        # net.save_params(f_params='sa_model_params.pt', f_optimizer='sa_optimizer_params.pt')
+        previous_model = copy.deepcopy(net.module_)
 
         # calc old loss
         y_pred = net.infer(X_train, **fit_params)
@@ -135,7 +136,8 @@ class SAModule(nn.Module):
 
         # If the new solution is better or with probability e^(delta/temperature), accept it
         if new_loss > loss and np.random.rand() >= math.exp(-delta / self.t):
-            net.load_params(f_params='sa_model_params.pt', f_optimizer='sa_optimizer_params.pt')
+            # net.load_params(f_params='sa_model_params.pt', f_optimizer='sa_optimizer_params.pt')
+            net.module_ = copy.deepcopy(previous_model)
             new_y_pred = y_pred
             new_loss = loss
 
