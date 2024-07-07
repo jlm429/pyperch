@@ -20,7 +20,7 @@ import math
 
 
 class SAModule(nn.Module):
-    def __init__(self, layer_sizes, t=10000, cooling=.95, dropout_percent=0, step_size=.1, activation=nn.ReLU(),
+    def __init__(self, layer_sizes, t=10000, cooling=.95, t_min=.001, dropout_percent=0, step_size=.1, activation=nn.ReLU(),
                  output_activation=nn.Softmax(dim=-1)):
         """
 
@@ -31,11 +31,14 @@ class SAModule(nn.Module):
         layer_sizes {array-like}:
             Sizes of all layers including input, hidden, and output layers. Must be a tuple or list of integers.
 
-        t {int}:
+        t {float}:
             SA temperature.
 
         cooling {float}:
             Cooling rate.
+
+        t_min {float}:
+            SA minimum temperature.
 
         dropout_percent {float}:
             Probability of an element to be zeroed.
@@ -61,6 +64,7 @@ class SAModule(nn.Module):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.t = t
         self.cooling = cooling
+        self.t_min = t_min
 
         # Create layers based on layer_sizes
         for i in range(len(self.layer_sizes) - 1):
@@ -142,6 +146,8 @@ class SAModule(nn.Module):
             new_loss = loss
 
         self.t = self.cooling * self.t
+        if self.t < self.t_min:
+            self.t = self.t_min
         return new_loss, new_y_pred
 
     @staticmethod
