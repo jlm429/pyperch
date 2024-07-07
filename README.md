@@ -32,7 +32,7 @@ For starter code and examples, see
 
 Pull requests are welcome.  
 
-* Fork bettermdptools.
+* Fork pyperch.
 * Create a branch (`git checkout -b branch_name`)
 * Commit changes (`git commit -m "Comments"`)
 * Push to branch (`git push origin branch_name`)
