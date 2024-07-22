@@ -26,12 +26,4 @@ workflows:
   version: 2
   test:
     jobs:
-      - test:
-          matrix:
-            parameters:
-              python-version: ["3.11"]
-
-parameters:
-  python-version:
-    type: string
-    default: "3.11"
+      - test
