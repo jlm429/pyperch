@@ -16,8 +16,9 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
     install_requires=[
-        'skorch==0.15.0',
-        'torch>=2.2, <2.4',
+        'skorch>=0.15.0, <=1.0.0',
+        'torch>=2.2.0, <2.4.0',
+        'scikit-learn<=1.4.2',
         'numpy',
         'matplotlib'
     ],
