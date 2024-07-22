@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: circleci/python:3.11  # Specify the Python version
+      - image: cimg/python:3.11-node # Specify the Python version
     steps:
       - checkout
       - run:
