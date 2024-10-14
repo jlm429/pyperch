@@ -245,7 +245,7 @@ class GAModule(nn.Module):
 
         self.population = new_population
         values = new_values
-        best_fitness_index = np.argmin(values)
+        best_fitness_index = np.argmax(values)
 
         old_model = net.module_
         net.module_ = deepcopy(self.population[best_fitness_index])
