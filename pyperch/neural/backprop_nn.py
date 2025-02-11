@@ -13,7 +13,7 @@ from skorch import NeuralNet
 
 
 class BackpropModule(nn.Module):
-    def __init__(self, layer_sizes, dropout_percent=0, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+    def __init__(self, layer_sizes, dropout_percent=0, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1), random_seed=None):
         """
 
         Initialize the neural network.
@@ -41,6 +41,8 @@ class BackpropModule(nn.Module):
         self.output_activation = output_activation
         self.layers = nn.ModuleList()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if random_seed is not None:
+            torch.manual_seed(random_seed)
 
         # Create layers based on layer_sizes
         for i in range(len(self.layer_sizes) - 1):
