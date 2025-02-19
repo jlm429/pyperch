@@ -130,7 +130,7 @@ class GAModule(nn.Module):
         individual.eval()
         with torch.no_grad():
             outputs = individual(data)
-            loss = criterion(outputs, targets)
+            loss = criterion(outputs.flatten(), targets)
         return -loss.item()
 
     def mate(self, parent1, parent2):
@@ -206,7 +206,7 @@ class GAModule(nn.Module):
         if self.population is None:
             self.population = self.generate_initial_population(self.population_size, model)
 
-        values = np.array([self.evaluate(individual, net.criterion, data, targets) for individual in self.population])
+        values = np.array([self.evaluate(individual, net.criterion_, data, targets) for individual in self.population])
 
         # Calculate probabilities for selection based on fitness
         fitness = np.array(values)
@@ -241,7 +241,7 @@ class GAModule(nn.Module):
         # Re-evaluate new population
         for i in range(self.population_size):
             if new_values[i] == -1:
-                new_values[i] = self.evaluate(new_population[i], net.criterion, data, targets)
+                new_values[i] = self.evaluate(new_population[i], net.criterion_, data, targets)
 
         self.population = new_population
         values = new_values
