@@ -21,7 +21,7 @@ import math
 
 class SAModule(nn.Module):
     def __init__(self, layer_sizes, t=10000, cooling=.95, t_min=.001, dropout_percent=0, step_size=.1, activation=nn.ReLU(),
-                 output_activation=nn.Softmax(dim=-1)):
+                 output_activation=nn.Softmax(dim=-1), random_seed=None):
         """
 
         Initialize the neural network.
@@ -65,6 +65,10 @@ class SAModule(nn.Module):
         self.t = t
         self.cooling = cooling
         self.t_min = t_min
+        self.random_seed = random_seed
+        if self.random_seed is not None:
+            torch.manual_seed(self.random_seed)
+            np.random.seed(self.random_seed)
 
         # Create layers based on layer_sizes
         for i in range(len(self.layer_sizes) - 1):
