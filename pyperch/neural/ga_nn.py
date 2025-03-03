@@ -19,7 +19,7 @@ from copy import deepcopy
 
 class GAModule(nn.Module):
     def __init__(self, layer_sizes, population_size=300, to_mate=150, to_mutate=50, dropout_percent=0,
-                 step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1)):
+                 step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1), random_seed=None):
         """
 
          Initialize the neural network.
@@ -64,6 +64,10 @@ class GAModule(nn.Module):
         self.to_mate = to_mate
         self.to_mutate = to_mutate
         self.population = None
+        self.random_seed = random_seed
+        if self.random_seed is not None:
+            torch.manual_seed(self.random_seed)
+            np.random.seed(self.random_seed)
 
         # Create layers based on layer_sizes
         for i in range(len(self.layer_sizes) - 1):

@@ -20,7 +20,7 @@ import copy
 
 class RHCModule(nn.Module):
     def __init__(self, layer_sizes, dropout_percent=0, step_size=.1, activation=nn.ReLU(),
-                 output_activation=nn.Softmax(dim=-1)):
+                 output_activation=nn.Softmax(dim=-1), random_seed=None):
         """
 
         Initialize the neural network.
@@ -52,6 +52,10 @@ class RHCModule(nn.Module):
         self.output_activation = output_activation
         self.layers = nn.ModuleList()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.random_seed = random_seed
+        if self.random_seed is not None:
+            torch.manual_seed(self.random_seed)
+            np.random.seed(self.random_seed)
 
         # Create layers based on layer_sizes
         for i in range(len(self.layer_sizes) - 1):
