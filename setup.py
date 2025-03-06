@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='pyperch',
     url='https://github.com/jlm429/pyperch',
-    version='0.1.3',
+    version='0.1.4',
     platforms=['Any'],
     license='New BSD',
     author='John Mansfield',
