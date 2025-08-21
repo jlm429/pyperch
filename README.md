@@ -16,7 +16,7 @@ pip install pyperch
 ### PyTorch-Only (No Skorch Required)
 
 - [`rhc_adam_hybrid.ipynb`](notebooks/hybrid_rhc_network.ipynb)  
-  **New notebook** demonstrating raw PyTorch training using `pyperch`'s RHC optimizer and Adam together on different layers — no Skorch dependency required. Ideal for hybrid workflows and experimentation.
+  **New notebook** demonstrating PyTorch training using pyperch's RHC optimizer and Adam together on different layers - no Skorch dependency required. Ideal for hybrid workflows and experimentation.
   
 ---
 
