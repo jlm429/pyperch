@@ -11,19 +11,31 @@ Three random optimization algorithms - randomized hill climbing, simulated annea
 ```
 pip install pyperch
 ```
-### Examples
+## Examples
 
-For starter code and examples, see
+### PyTorch-Only (No Skorch Required)
 
-[Backprop Neural Net](notebooks/backprop_network.ipynb) 
+- [`rhc_adam_hybrid.ipynb`](notebooks/hybrid_rhc_network.ipynb)  
+  **New notebook** demonstrating raw PyTorch training using `pyperch`'s RHC optimizer and Adam together on different layers — no Skorch dependency required. Ideal for hybrid workflows and experimentation.
+  
+---
 
-[RHC Optimized Neural Net](notebooks/rhc_opt_network.ipynb) 
+### Classic Skorch Examples
 
-[SA Optimized Neural Net](notebooks/sa_opt_network.ipynb)
+- [`backprop_network.ipynb`](notebooks/backprop_network.ipynb)  
+  Standard neural network training using backpropagation with Skorch.
 
-[GA Optimized Neural Net](notebooks/ga_opt_network.ipynb)
+- [`rhc_opt_network.ipynb`](notebooks/rhc_opt_network.ipynb)  
+  Neural network trained using Randomized Hill Climbing (RHC) via Skorch.
 
-[Regression Examples](notebooks/regression_examples.ipynb)
+- [`sa_opt_network.ipynb`](notebooks/sa_opt_network.ipynb)  
+  Neural network trained using Simulated Annealing (SA) via Skorch.
+
+- [`ga_opt_network.ipynb`](notebooks/ga_opt_network.ipynb)  
+  Neural network trained using a Genetic Algorithm (GA) via Skorch.
+
+- [`regression_examples.ipynb`](notebooks/regression_examples.ipynb)  
+  Regression tasks using randomized optimization.
 
 
 ## Contributing
