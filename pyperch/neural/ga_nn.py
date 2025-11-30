@@ -19,36 +19,47 @@ from copy import deepcopy
 
 class GAModule(nn.Module):
     def __init__(self, layer_sizes, population_size=300, to_mate=150, to_mutate=50, dropout_percent=0,
-                 step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1), random_seed=None):
+                 step_size=.1, activation=nn.ReLU(), output_activation=nn.Softmax(dim=-1), random_seed=None,
+                 trainable_layers=None, freeze_seed=None):
         """
 
-         Initialize the neural network.
+        Initialize the neural network.
 
-         PARAMETERS:
+        PARAMETERS:
 
-         layer_sizes {array-like}:
-             Sizes of all layers including input, hidden, and output layers. Must be a tuple or list of integers.
+        layer_sizes {array-like}:
+            Sizes of all layers including input, hidden, and output layers. Must be a tuple or list of integers.
 
-         population_size {int}:
-             GA population size.  Must be greater than 0.
+        population_size {int}:
+            GA population size.  Must be greater than 0.
 
-         to_mate {int}:
-             GA size of population to mate each time step.
+        to_mate {int}:
+            GA size of population to mate each time step.
 
-         to_mutate {int}:
-             GA size of population to mutate each time step.
+        to_mutate {int}:
+            GA size of population to mutate each time step.
 
-         dropout_percent {float}:
-             Probability of an element to be zeroed.
+        dropout_percent {float}:
+            Probability of an element to be zeroed.
 
-         step_size {float}:
-             Step size for mutation strength
+        step_size {float}:
+            Step size for mutation strength
 
-         activation {torch.nn.modules.activation}:
-             Activation function.
+        activation {torch.nn.modules.activation}:
+            Activation function.
 
-         output_activation {torch.nn.modules.activation}:
-             Output activation.
+        output_activation {torch.nn.modules.activation}:
+            Output activation.
+
+        trainable_layers {int or None}:
+            Number of layers to keep unfrozen (counting from the end excl input layer). If None, all layers are trainable.
+            If specified, only the last trainable_layers will be trainable, others will be frozen.
+
+        freeze_seed {int or None}:
+            Random seed for reproducible freezing. If None, uses random_seed.
+    
+        trainable_params_counter {int}:
+            Counter of trainable parameters.
 
          """
         super().__init__()
@@ -65,6 +76,9 @@ class GAModule(nn.Module):
         self.to_mutate = to_mutate
         self.population = None
         self.random_seed = random_seed
+        self.trainable_layers = trainable_layers
+        self.freeze_seed = freeze_seed if freeze_seed is not None else random_seed
+        
         if self.random_seed is not None:
             torch.manual_seed(self.random_seed)
             np.random.seed(self.random_seed)
@@ -72,6 +86,12 @@ class GAModule(nn.Module):
         # Create layers based on layer_sizes
         for i in range(len(self.layer_sizes) - 1):
             self.layers.append(nn.Linear(self.layer_sizes[i], self.layer_sizes[i + 1], device=self.device))
+        
+        # 0 if there's freezing required to be calc'd in _apply_freezing else will be sum of all params since all layers are trainable
+        self.trainable_params_counter = 0 if trainable_layers is not None else sum(param.numel() for param in self.layers.parameters())
+        
+        # Apply freezing if specified
+        self._apply_freezing()
 
     def forward(self, X, **kwargs):
         """
@@ -93,10 +113,54 @@ class GAModule(nn.Module):
         X = self.output_activation(self.layers[-1](X))
         return X
 
+    def _apply_freezing(self):
+        """
+        Apply freezing to layers based on trainable_layers parameter.
+        Freezes all layers except the last trainable_layers layers.
+        """
+        if self.trainable_layers is None:
+            print("GA: No freezing applied - all layers are trainable")
+            return
+        
+        if self.trainable_layers <= 0:
+            raise ValueError(f"GA: trainable_layers must be > 0, got {self.trainable_layers}. Use trainable_layers=None to train all layers.")
+            
+        if self.trainable_layers >= len(self.layers):
+            print("GA: Warning - trainable_layers >= total layers, all layers will be trainable")
+            return
+        
+        # randoms seed
+        if self.freeze_seed is not None:
+            torch.manual_seed(self.freeze_seed)
+            np.random.seed(self.freeze_seed)
+        
+        # calc which layers to freeze and freeze em
+        layers_to_freeze = len(self.layers) - self.trainable_layers 
+        print(f"GA: Freezing first {layers_to_freeze} layers, keeping last {self.trainable_layers} layers trainable")
+        for i in range(layers_to_freeze):
+            for param in self.layers[i].parameters():
+                self.trainable_params_counter += param.numel()
+                param.requires_grad = False
+            print(f"GA: Layer {i} frozen (size: {self.layer_sizes[i]} -> {self.layer_sizes[i+1]})")
+        
+        # reset random seed to original if different from freeze_seed
+        if self.random_seed is not None and self.random_seed != self.freeze_seed:
+            torch.manual_seed(self.random_seed)
+            np.random.seed(self.random_seed)
+
+    def _is_layer_trainable(self, layer: nn.Module) -> bool:
+            """Checks if all parameters in a PyTorch layer are trainable (requires_grad=True)."""
+            for param in layer.parameters():
+                # assumption:
+                # if we find even one parameter that requires a gradient, the layer is trainable.
+                if param.requires_grad:
+                    return True
+            return False
+
     def generate_initial_population(self, size, model):
         """
         Generates an initial population of neural network models by introducing slight variations to
-        the given model's weights.
+        the given model's weights. Only modifies trainable parameters.
 
         Parameters:
 
@@ -114,7 +178,8 @@ class GAModule(nn.Module):
             for _ in range(size):
                 new_model = deepcopy(model)
                 for new_param, param in zip(new_model.parameters(), model.parameters()):
-                    if len(param.shape) > 1:  # using weight matrices
+                    # Only modify trainable parameters
+                    if param.requires_grad and len(param.shape) > 1:  # using weight matrices
                         new_param.data = param.data + torch.randn_like(param) * 0.1
                 initial_population.append(new_model)
         return initial_population
@@ -141,6 +206,7 @@ class GAModule(nn.Module):
         """
         Combines weights of two parent models using uniform crossover. Each gene (nn weight) from the child
         model is selected randomly from one of the two parents with equal probability.
+        Only operates on trainable parameters.
 
         Parameters:
 
@@ -155,7 +221,8 @@ class GAModule(nn.Module):
         """
         child = deepcopy(parent1)
         for child_param, parent1_param, parent2_param in zip(child.parameters(), parent1.parameters(), parent2.parameters()):
-            if len(child_param.shape) > 1:  # mate weights
+            # Only mate trainable parameters
+            if parent1_param.requires_grad and len(child_param.shape) > 1:  # mate weights
                 mask = torch.bernoulli(torch.full_like(parent1_param.data, 0.5))
                 child_param.data = mask * parent1_param.data + (1 - mask) * parent2_param.data
         return child
@@ -163,6 +230,7 @@ class GAModule(nn.Module):
     def mutate(self, individual):
         """
         Introduces random mutations to the neural net weights.
+        Only mutates trainable parameters.
 
         Parameters:
 
@@ -171,7 +239,8 @@ class GAModule(nn.Module):
         """
         mutation_strength = self.step_size
         for param in individual.parameters():
-            if len(param.shape) > 1:  # mutate weights
+            # Only mutate trainable parameters
+            if param.requires_grad and len(param.shape) > 1:  # mutate weights
                 if np.random.rand() < mutation_strength:
                     noise = torch.randn_like(param) * 0.1
                     param.data += noise

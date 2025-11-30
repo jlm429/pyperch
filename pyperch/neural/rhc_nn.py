@@ -20,7 +20,7 @@ import copy
 
 class RHCModule(nn.Module):
     def __init__(self, layer_sizes, dropout_percent=0, step_size=.1, activation=nn.ReLU(),
-                 output_activation=nn.Softmax(dim=-1), random_seed=None):
+                 output_activation=nn.Softmax(dim=-1), random_seed=None, trainable_layers=None, freeze_seed=None):
         """
 
         Initialize the neural network.
@@ -42,6 +42,16 @@ class RHCModule(nn.Module):
         output_activation {torch.nn.modules.activation}:
             Output activation.
 
+        trainable_layers {int or None}:
+            Number of layers to keep unfrozen (counting from the end excl input layer). If None, all layers are trainable.
+            If specified, only the last trainable_layers will be trainable, others will be frozen.
+
+        freeze_seed {int or None}:
+            Random seed for reproducible freezing. If None, uses random_seed.
+    
+        trainable_params_counter {int}:
+            Counter of trainable parameters.
+
         """
         super().__init__()
         RHCModule.register_rhc_training_step()
@@ -53,6 +63,9 @@ class RHCModule(nn.Module):
         self.layers = nn.ModuleList()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.random_seed = random_seed
+        self.trainable_layers = trainable_layers
+        self.freeze_seed = freeze_seed if freeze_seed is not None else random_seed
+        
         if self.random_seed is not None:
             torch.manual_seed(self.random_seed)
             np.random.seed(self.random_seed)
@@ -60,6 +73,12 @@ class RHCModule(nn.Module):
         # Create layers based on layer_sizes
         for i in range(len(self.layer_sizes) - 1):
             self.layers.append(nn.Linear(self.layer_sizes[i], self.layer_sizes[i + 1], device=self.device))
+        
+        # 0 if there's freezing required to be calc'd in _apply_freezing else will be sum of all params since all layers are trainable
+        self.trainable_params_counter = 0 if trainable_layers is not None else sum(param.numel() for param in self.layers.parameters())
+        
+        # Apply freezing if specified
+        self._apply_freezing()
 
     def forward(self, X, **kwargs):
         """
@@ -81,6 +100,50 @@ class RHCModule(nn.Module):
         X = self.output_activation(self.layers[-1](X))
         return X
 
+    def _apply_freezing(self):
+        """
+        Apply freezing to layers based on trainable_layers parameter.
+        Freezes all layers except the last trainable_layers layers.
+        """
+        if self.trainable_layers is None:
+            print("GA: No freezing applied - all layers are trainable")
+            return
+        
+        if self.trainable_layers <= 0:
+            raise ValueError(f"GA: trainable_layers must be > 0, got {self.trainable_layers}. Use trainable_layers=None to train all layers.")
+            
+        if self.trainable_layers >= len(self.layers):
+            print("GA: Warning - trainable_layers >= total layers, all layers will be trainable")
+            return
+        
+        # randoms seed
+        if self.freeze_seed is not None:
+            torch.manual_seed(self.freeze_seed)
+            np.random.seed(self.freeze_seed)
+        
+        # calc which layers to freeze and freeze em
+        layers_to_freeze = len(self.layers) - self.trainable_layers 
+        print(f"GA: Freezing first {layers_to_freeze} layers, keeping last {self.trainable_layers} layers trainable")
+        for i in range(layers_to_freeze):
+            for param in self.layers[i].parameters():
+                self.trainable_params_counter += param.numel()
+                param.requires_grad = False
+            print(f"GA: Layer {i} frozen (size: {self.layer_sizes[i]} -> {self.layer_sizes[i+1]})")
+        
+        # reset random seed to original if different from freeze_seed
+        if self.random_seed is not None and self.random_seed != self.freeze_seed:
+            torch.manual_seed(self.random_seed)
+            np.random.seed(self.random_seed)
+
+    def _is_layer_trainable(self, layer: nn.Module) -> bool:
+            """Checks if all parameters in a PyTorch layer are trainable (requires_grad=True)."""
+            for param in layer.parameters():
+                # assumption:
+                # if we find even one parameter that requires a gradient, the layer is trainable.
+                if param.requires_grad:
+                    return True
+            return False
+        
     def run_rhc_single_step(self, net, X_train, y_train, **fit_params):
         """
         RHC training step
@@ -112,15 +175,23 @@ class RHCModule(nn.Module):
         y_pred = net.infer(X_train, **fit_params)
         loss = net.get_loss(y_pred, y_train, X_train, training=False)
 
-        # select random layer
-        layer = np.random.randint(0, len(self.layers))-1
-        input_dim = np.random.randint(0, net.module_.layers[layer].weight.shape[0])
-        output_dim = np.random.randint(0, net.module_.layers[layer].weight.shape[1])
+        # select random layer (only from trainable layers, for unfrozen case will list all anyway)
+        trainable_layers = [i for i, layer in enumerate(net.module_.layers) if any(param.requires_grad for param in layer.parameters())]
+        if not trainable_layers:
+            print("RHC: Warning - no trainable layers available for optimization")
+            return loss, y_pred
+        
+        layer_idx = np.random.choice(trainable_layers)
+        layer = net.module_.layers[layer_idx]
+
+        # omitted: this is redundant check since we're alr selecting from a list of trainable layers
+        # if self._is_layer_trainable(layer): 
+        input_dim = np.random.randint(0, layer.weight.shape[0])
+        output_dim = np.random.randint(0, layer.weight.shape[1])
         neighbor = self.step_size * np.random.choice([-1, 1])
 
         with torch.no_grad():
-            net.module_.layers[layer].weight[input_dim][output_dim] = neighbor + \
-                net.module_.layers[layer].weight[input_dim][output_dim].data
+            layer.weight[input_dim][output_dim] = neighbor + layer.weight[input_dim][output_dim].data
 
         # Evaluate new loss
         new_y_pred = net.infer(X_train, **fit_params)
