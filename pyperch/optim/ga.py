@@ -157,7 +157,7 @@ def ga(
         else:
             param.copy_(old_param)
 
-        return loss
+    return loss
 
 
 def initialize_populations(
