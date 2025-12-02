@@ -4,116 +4,121 @@ BSD 3-Clause License
 
 SA class: Simulated Annealing optimizer for a PyTorch neural network model
 
-Inspired by the PyTorch SGD implementation
-https://github.com/pytorch/pytorch/blob/main/torch/optim/sgd.py
 """
-
 import math
-from typing import Optional, Callable
+from typing import Callable, Optional, List
 
-import torch
 import numpy as np
+import torch
+from torch import Tensor
 
 
 class SA(torch.optim.Optimizer):
     def __init__(
         self,
         params,
-        t: float = 1,
+        t: float = 1.0,
         t_min: float = 0.1,
-        step_size: float = 0.1,
         cooling: float = 0.95,
+        step_size: float = 0.1,
         random_state: int = 42,
     ):
-        """
-        Simulated Annealing optimizer
-
-        PARAMETERS:
-
-        t {float}:
-            SA temperature.
-
-        cooling {float}:
-            Cooling rate.
-
-        t_min {float}:
-            SA minimum temperature.
-
-        step_size {float}:
-            Step size for hill climbing.
-
-        random_state {int}:
-            Random state for the optimizer.
-        """
-        random = np.random.default_rng(seed=random_state)
+        rng = np.random.default_rng(seed=random_state)
         torch.manual_seed(random_state)
+
         defaults = dict(
             t=t,
             t_min=t_min,
-            step_size=step_size,
             cooling=cooling,
-            random=random,
+            step_size=step_size,
+            random=rng,
         )
+
         super().__init__(params, defaults)
 
-    @torch.no_grad
+    @torch.no_grad()
     def step(self, closure: Callable[[], float]) -> Optional[float]:
-        """Perform a single optimization step.
-
-        Args:
-            closure (Callable, optional): A closure that reevaluates the model
-                and returns the loss.
+        """
+        Perform a single SA update over all parameter groups.
+        Must update group["t"] each call.
         """
         loss = None
-        for group in self.param_groups:
-            params: list[torch.Tensor] = group["params"]
 
-            loss = sa(
-                params,
+        for group in self.param_groups:
+            params: List[Tensor] = group["params"]
+
+            loss, new_t = sa_step(
+                params=params,
+                closure=closure,
                 t=group["t"],
                 t_min=group["t_min"],
-                step_size=group["step_size"],
-                random=group["random"],
                 cooling=group["cooling"],
-                closure=closure,
+                step_size=group["step_size"],
+                rng=group["random"],
             )
+
+            group["t"] = new_t
+
         return loss
 
 
-def sa(
-    params: list[torch.Tensor],
-    random: np.random.Generator,
+def sa_step(
+    params: List[Tensor],
     closure: Callable[[], float],
-    t: float = 1.0,
-    t_min: float = 0.1,
-    step_size: float = 0.1,
-    cooling: float = 0.95,
+    t: float,
+    t_min: float,
+    cooling: float,
+    step_size: float,
+    rng: np.random.Generator,
 ):
-    r"""Functional API that performs Simulated Annealing algorithm computation.
-
-    See :class:`~pyperch.optim.SA` for details.
     """
-    loss = closure()
+    Perform ONE simulated annealing step.
 
-    param = params[random.integers(0, len(params))]
-    old_param = param.clone()
+    Mirrors skorch SAModule.run_sa_single_step - inspired by https://github.com/pushkar/ABAGAIL:
+      - Select ONLY trainable parameters (requires_grad=True)
+      - Choose ONE parameter tensor
+      - Choose ONE weight within that tensor
+      - Add ±step_size
+      - Evaluate closure() before/after
+      - Accept/reject based on SA probability
+      - Update temperature and return it
+    """
 
-    flat_param = param.view(-1)
-    idx = random.integers(0, len(flat_param))
+    # ---- 1. Compute current loss ----
+    old_loss = closure()
 
-    flat_param[idx] += step_size * random.choice([-1, 1])
+    # ---- 2. Pick only trainable parameters ----
+    trainable_params = [p for p in params if p.requires_grad]
+    if not trainable_params:
+        # no trainable params → do nothing
+        return old_loss, t
 
-    param.copy_(flat_param.view_as(param))
+    # ---- 3. Select ONE parameter tensor ----
+    p = trainable_params[rng.integers(0, len(trainable_params))]
+
+    # Save old version
+    old_param = p.clone()
+
+    # ---- 4. Mutate ONE element inside this parameter ----
+    flat = p.view(-1)
+    idx = rng.integers(0, flat.numel())
+    change = step_size * rng.choice([-1, 1])
+    flat[idx] += change
+    p.copy_(flat.view_as(p))
+
+    # ---- 5. Compute new loss ----
     new_loss = closure()
+    delta = new_loss - old_loss
 
-    delta = new_loss - loss
-    accept = delta < 0 or random.random() < math.exp(-delta / t)
+    # ---- 6. Decide acceptance ----
+    if delta > 0:
+        prob = math.exp(-delta / t)
+        if rng.random() >= prob:
+            # reject → revert weights
+            p.copy_(old_param)
+            new_loss = old_loss
 
-    if accept:
-        loss = new_loss
-    else:
-        param.copy_(old_param)
+    # ---- 7. Cool temperature ----
+    new_t = max(t * cooling, t_min)
 
-    t = max(t * cooling, t_min)
-
-    return loss
+    return new_loss, new_t
