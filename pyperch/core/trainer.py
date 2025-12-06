@@ -129,29 +129,34 @@ class Trainer:
     # Internal helpers
     # ------------------------------------------------------------------
     def _closure_full(self, loader: DataLoader) -> float:
-        """Compute mean loss over a full loader (used for per-epoch mode)."""
-        self.model.train()
+        """Deterministic, full-dataset loss (ABAGAIL style)."""
+        self.model.eval()  # critical for SA!
         total_loss = 0.0
         n = 0
-        for x, y in loader:
-            x = x.to(self.device)
-            y = y.to(self.device)
-            preds = self.model(x)
-            loss = self.loss_fn(preds, y)
-            total_loss += float(loss.detach().cpu())
-            n += 1
+
+        with torch.no_grad():  # critical for SA!
+            for x, y in loader:
+                x = x.to(self.device)
+                y = y.to(self.device)
+                preds = self.model(x)
+                loss = self.loss_fn(preds, y)
+                total_loss += float(loss)
+                n += 1
+
         return total_loss / max(n, 1)
 
     def _run_epoch_per_epoch_mode(self, train_loader: DataLoader) -> float:
-        """Single meta-optimizer step per epoch (no per-batch gradient)."""
-        params = self.meta_params  # only meta-params are updated here
+        """Run ONE SA/RHC/GA step per epoch using full-dataset loss."""
+        params = self.meta_params
 
         if not params:
-            # nothing for meta-optimizer to do; just evaluate loss once
             return self._closure_full(train_loader)
 
+        # deterministic closure with eval() and no_grad()
         def closure() -> float:
             return self._closure_full(train_loader)
+
+        self.model.eval()  # matches old optimizer environment
 
         loss = run_optimizer_step(
             name=self.config.optimizer,
@@ -160,12 +165,12 @@ class Trainer:
             closure=closure,
             cfg=self.config.optimizer_config,
         )
+
         return float(loss)
 
     def _run_epoch_per_batch_mode(self, train_loader: DataLoader) -> float:
         """Per-batch loop with optional grad + meta updates."""
         params_meta = self.meta_params
-
         running_loss = 0.0
         n = 0
 

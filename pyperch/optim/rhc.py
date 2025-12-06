@@ -1,3 +1,15 @@
+"""
+Randomized Optimization methods for PyPerch.
+
+Based on the original PyPerch optimizers by Jakub Owczarek
+(BSD 3-Clause License).
+
+These were also inspired by ABAGAIL’s randomized optimization algorithms - https://github.com/pushkar/ABAGAIL.
+
+Substantial refactoring and redesign by John Mansfield (2025).
+
+"""
+
 from __future__ import annotations
 from typing import Callable, List
 import numpy as np
@@ -14,9 +26,8 @@ def rhc(
     step_size: float = 0.1,
 ) -> float:
     """
-    Functional Randomized Hill Climbing step.
+    Functional Randomized Hill Climbing step:
 
-    Fully matches original behavior:
     - evaluate old loss
     - apply full-vector noise
     - evaluate new loss

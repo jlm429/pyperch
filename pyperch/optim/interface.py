@@ -15,12 +15,15 @@ def get_optimizer(name: str):
     name = name.lower()
     if name == "sa":
         from . import sa
+
         return sa.sa
     if name == "rhc":
         from . import rhc
+
         return rhc.rhc
     if name == "ga":
         from . import ga
+
         return ga.ga
     raise KeyError(f"Unknown optimizer: {name}")
 
@@ -32,10 +35,11 @@ def run_optimizer_step(
     closure: Closure,
     cfg: OptimizerConfig,
 ) -> float:
-    opt = get_optimizer(name.lower())
+    name = name.lower()
+    opt = get_optimizer(name)
 
-    if name.lower() == "sa":
-        return opt(
+    if name == "sa":
+        loss, new_t = opt(
             params=params,
             random=rng,
             closure=closure,
@@ -44,15 +48,20 @@ def run_optimizer_step(
             step_size=cfg.step_size,
             cooling=cfg.cooling,
         )
-    elif name.lower() == "rhc":
-        return opt(
+        cfg.t = new_t  # persist temperature like group["t"] in the old optimizer
+        return float(loss)
+
+    elif name == "rhc":
+        loss = opt(
             params=params,
             random=rng,
             closure=closure,
             step_size=cfg.step_size,
         )
-    elif name.lower() == "ga":
-        return opt(
+        return float(loss)
+
+    elif name == "ga":
+        loss = opt(
             params=params,
             random=rng,
             closure=closure,
@@ -60,5 +69,7 @@ def run_optimizer_step(
             mutation_rate=cfg.mutation_rate,
             step_size=cfg.step_size,
         )
+        return float(loss)
+
     else:
         raise KeyError(f"Unknown optimizer: {name}")
