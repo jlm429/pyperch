@@ -12,15 +12,34 @@ class Callback:
     def on_train_end(self, engine: "Engine") -> None: ...
 
 
+class CaptureInitialWeights(Callback):
+    """
+    Captures the initial weights of specified parameters at the start of training.
+    Useful for verifying freeze() and meta_opt() behavior.
+    """
+
+    def __init__(self, *param_names: str):
+        self.param_names = param_names
+        self.initial = {}
+
+    def on_train_begin(self, engine: "Engine") -> None:
+        model = engine.model
+        for name, p in model.named_parameters():
+            if name in self.param_names:
+                self.initial[name] = p.detach().clone()
+
+
 @dataclass
 class HistoryCallback(Callback):
-    history: Dict[str, Any] = field(default_factory=lambda: {
-        "epoch": [],
-        "train_loss": [],
-        "valid_loss": [],
-        "train_metrics": {},
-        "valid_metrics": {},
-    })
+    history: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "epoch": [],
+            "train_loss": [],
+            "valid_loss": [],
+            "train_metrics": {},
+            "valid_metrics": {},
+        }
+    )
 
     def on_epoch_end(self, engine: "Engine") -> None:
         h = self.history
