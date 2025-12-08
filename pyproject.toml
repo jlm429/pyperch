@@ -7,6 +7,8 @@ dependencies = [
     "torch",
     "numpy",
     "matplotlib",
+    "notebook (>=7.5.0,<8.0.0)",
+    "scikit-learn (>=1.7.2,<2.0.0)",
 ]
 
 [build-system]
@@ -16,7 +18,7 @@ build-backend = "setuptools.build_meta"
 [dependency-groups]
 dev = [
     "black (>=25.11.0,<26.0.0)",
-    "ruff (>=0.14.8,<0.15.0)"
+    "ruff (>=0.14.8,<0.15.0)",
 ]
 
 [tool.ruff]

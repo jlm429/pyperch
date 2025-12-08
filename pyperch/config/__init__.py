@@ -1,1 +1,6 @@
-from .schema import TrainConfig, OptimizerConfig
+from .schema import (
+    TrainConfig,
+    OptimizerConfig,
+    TorchConfig,
+    ModelConfig,
+)

@@ -45,7 +45,7 @@ class Trainer:
         layer_modes = self.config.layer_modes or {}
 
         for name, p in self.model.named_parameters():
-            mode = layer_modes.get(name, "meta")  # default is meta-optimizer
+            mode = layer_modes.get(name, "meta")  # default = meta-optimizer
 
             if mode == "freeze":
                 p.requires_grad = False
@@ -62,14 +62,59 @@ class Trainer:
             else:
                 raise ValueError(f"Unknown layer mode '{mode}' for parameter '{name}'")
 
-        # Torch optimizer for gradient-based params (if any)
+        # ------------------------------------------------------------
+        # PyTorch optimizer for gradient-based params (if any)
+        # ------------------------------------------------------------
         if self.grad_params:
-            # TODO: expose LR / optimizer choice in TrainConfig
-            self.torch_optim = torch.optim.Adam(self.grad_params, lr=1e-3)
+            tc = self.config.torch_config
+
+            # ----------------------------
+            # Backwards-compatible default
+            # ----------------------------
+            if tc is None:
+                self.torch_optim = torch.optim.Adam(self.grad_params, lr=1e-3)
+
+            else:
+                name = tc.optimizer.lower()
+
+                if name == "adam":
+                    self.torch_optim = torch.optim.Adam(
+                        self.grad_params,
+                        lr=tc.lr,
+                        betas=tc.betas,
+                        eps=tc.eps,
+                        weight_decay=tc.weight_decay,
+                    )
+
+                elif name == "sgd":
+                    self.torch_optim = torch.optim.SGD(
+                        self.grad_params,
+                        lr=tc.lr,
+                        momentum=tc.momentum,
+                        nesterov=tc.nesterov,
+                        weight_decay=tc.weight_decay,
+                    )
+
+                elif name == "rmsprop":
+                    self.torch_optim = torch.optim.RMSprop(
+                        self.grad_params,
+                        lr=tc.lr,
+                        alpha=tc.alpha,
+                        eps=tc.eps,
+                        centered=tc.centered,
+                        momentum=tc.momentum,
+                        weight_decay=tc.weight_decay,
+                    )
+
+                else:
+                    raise ValueError(f"Unknown torch optimizer '{name}'")
+
         else:
             self.torch_optim = None
 
+        # ------------------------------------------------------------
         # Callbacks
+        # ------------------------------------------------------------
         user_cbs = list(config.callbacks)
         self.history_cb = HistoryCallback()
         user_cbs.append(self.history_cb)

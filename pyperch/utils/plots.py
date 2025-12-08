@@ -19,42 +19,47 @@ def plot_losses(history: Dict) -> None:
     plt.ylabel("loss")
     plt.legend()
     plt.tight_layout()
-    
-    
-def plot_accuracy(history: Dict) -> None:
-    """Plot train + validation accuracy on a single figure."""
+
+
+# --------------------------------------------------------
+# Generic metric plotting (F1, accuracy, R2, etc.)
+# --------------------------------------------------------
+def plot_metrics(history: Dict) -> None:
+    """Plot ALL metrics for train + valid on one figure.
+
+    Automatically handles:
+      - accuracy
+      - f1
+      - mse
+      - r2
+      - any new metrics added to history
+    """
     epochs: List[int] = history.get("epoch", [])
-    train_metrics = history.get("train_metrics", {})
-    valid_metrics = history.get("valid_metrics", {})
 
-    train_acc = train_metrics.get("accuracy", [])
-    valid_acc = valid_metrics.get("accuracy", [])
+    train_metrics = history.get("train_metrics", {}) or {}
+    valid_metrics = history.get("valid_metrics", {}) or {}
 
-    plt.figure()
-    if train_acc:
-        plt.plot(epochs, train_acc, label="Train Accuracy")
-    if valid_acc:
-        plt.plot(epochs, valid_acc, label="Validation Accuracy")
+    # Union of all metric names
+    metric_names = set(train_metrics.keys()) | set(valid_metrics.keys())
 
-    plt.xlabel("Epoch")
-    plt.ylabel("Accuracy")
-    plt.title("Accuracy Curve")
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
-
-
-def plot_metrics(history: Dict, split: str = "valid") -> None:
-    key = f"{split}_metrics"
-    epochs: List[int] = history.get("epoch", [])
-    metrics = history.get(key, {})
-    if not metrics:
+    if not metric_names:
+        print("No metrics found in history.")
         return
 
-    plt.figure()
-    for name, values in metrics.items():
-        plt.plot(epochs, values, label=name)
-    plt.xlabel("epoch")
-    plt.ylabel("metric value")
+    plt.figure(figsize=(7, 4))
+
+    for name in sorted(metric_names):
+        train_vals = train_metrics.get(name)
+        valid_vals = valid_metrics.get(name)
+
+        if train_vals:
+            plt.plot(epochs, train_vals, label=f"train_{name}")
+        if valid_vals:
+            plt.plot(epochs, valid_vals, label=f"valid_{name}")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Metric Value")
+    plt.title("Train & Validation Metrics")
     plt.legend()
+    plt.grid(True)
     plt.tight_layout()

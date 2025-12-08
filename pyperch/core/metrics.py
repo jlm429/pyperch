@@ -14,16 +14,13 @@ class Metric(ABC):
         self.reset()
 
     @abstractmethod
-    def reset(self) -> None:
-        ...
+    def reset(self) -> None: ...
 
     @abstractmethod
-    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
-        ...
+    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None: ...
 
     @abstractmethod
-    def compute(self) -> float:
-        ...
+    def compute(self) -> float: ...
 
 
 class MSE(Metric):
@@ -36,7 +33,7 @@ class MSE(Metric):
 
     def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
         diff = preds.detach() - target.detach()
-        self._sum_sq += float((diff ** 2).mean().item())
+        self._sum_sq += float((diff**2).mean().item())
         self._n += 1
 
     def compute(self) -> float:
@@ -91,8 +88,62 @@ class Accuracy(Metric):
         return self._correct / self._total
 
 
+class F1(Metric):
+    """Macro-F1 score computed over all classes seen in y_true."""
+
+    def __init__(self, eps: float = 1e-8):
+        super().__init__(name="f1")
+        self.eps = eps
+
+    def reset(self) -> None:
+        self.true_labels = []
+        self.pred_labels = []
+
+    def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
+        # detach
+        y_true = target.detach().view(-1).long()
+        preds = preds.detach()
+
+        # predicted labels
+        if preds.ndim > 1 and preds.size(-1) > 1:
+            y_hat = preds.argmax(dim=-1).long()
+        else:
+            y_hat = (preds > 0).long().view(-1)
+
+        self.true_labels.extend(y_true.cpu().tolist())
+        self.pred_labels.extend(y_hat.cpu().tolist())
+
+    def compute(self) -> float:
+        import torch
+
+        if len(self.true_labels) == 0:
+            return 0.0
+
+        true = torch.tensor(self.true_labels, dtype=torch.long)
+        pred = torch.tensor(self.pred_labels, dtype=torch.long)
+
+        classes = torch.unique(true)
+        f1_scores = []
+
+        for c in classes:
+            c = int(c.item())
+
+            tp = ((pred == c) & (true == c)).sum().item()
+            fp = ((pred == c) & (true != c)).sum().item()
+            fn = ((pred != c) & (true == c)).sum().item()
+
+            denom = 2 * tp + fp + fn
+            if denom == 0:
+                f1_scores.append(0.0)
+            else:
+                f1_scores.append(2 * tp / (denom + self.eps))
+
+        return float(sum(f1_scores) / len(f1_scores))
+
+
 BUILTIN_METRICS: Dict[str, type[Metric]] = {
     "mse": MSE,
     "r2": R2,
     "accuracy": Accuracy,
+    "f1": F1,
 }
