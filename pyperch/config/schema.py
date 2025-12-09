@@ -58,15 +58,16 @@ class TorchConfig:
 
 
 # ----------------------------------------------------------
-# Model configuration (activation, etc.)
+# Model configuration
 # ----------------------------------------------------------
 @dataclass
 class ModelConfig:
-    """Model options such as activation function.
-    Defaults preserve existing behavior.
-    """
+    """Model options such as activation function and architecture."""
 
     activation: str = "relu"  # relu | leaky_relu | tanh | sigmoid
+
+    # allow Optuna to tune hidden layer sizes
+    hidden: List[int] = field(default_factory=lambda: [32, 16])
 
 
 # ----------------------------------------------------------
@@ -88,17 +89,18 @@ class TrainConfig:
     optimizer: str = "sa"
     optimizer_config: OptimizerConfig = field(default_factory=OptimizerConfig)
 
-    # optional PyTorch optimizer settings
+    # Optional PyTorch optimizer settings
     torch_config: Optional[TorchConfig] = None
 
-    # optional model settings (e.g., activation)
-    model_config: Optional[ModelConfig] = None
+    # Optional model settings (activation + hidden layers)
+    ### ADDED: default_factory for safety (prevents None issues)
+    model_config: ModelConfig = field(default_factory=ModelConfig)
 
-    # Metrics: split -> list[Metric]
+    # Metrics
     metrics: Dict[str, List[Metric]] = field(default_factory=dict)
 
     # Callbacks
     callbacks: List[Callback] = field(default_factory=list)
 
-    # layer options
-    layer_modes: dict[str, str] | None = None  # {"layername": "freeze"|"grad"|"meta"}
+    # Layer options
+    layer_modes: dict[str, str] | None = None

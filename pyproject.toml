@@ -21,6 +21,10 @@ dev = [
     "ruff (>=0.14.8,<0.15.0)",
 ]
 
+optuna = [
+    "optuna (>=3.6.0,<4.0.0)"
+]
+
 [tool.ruff]
 line-length = 88
 
