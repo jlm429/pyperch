@@ -19,8 +19,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-poetry-cache-{{ checksum "poetry.lock" }}
-            - v1-poetry-cache-
+            - v2-poetry-cache-{{ checksum "poetry.lock" }}
+            - v2-poetry-cache-
 
       - run:
           name: Install dependencies with Poetry
@@ -28,7 +28,7 @@ jobs:
             poetry install --with dev --no-interaction --no-root
 
       - save_cache:
-          key: v1-poetry-cache-{{ checksum "poetry.lock" }}
+          key: v2-poetry-cache-{{ checksum "poetry.lock" }}
           paths:
             - ~/.cache/pypoetry
 
