@@ -79,8 +79,8 @@ If you are upgrading from Pyperch ≤ 0.1.6, the original standalone (functional
 
 You can find the previous implementations here:
 
-- **Git tag:** `<TAG>`  
-- **Directory:** `<PATH>` (archived copy from pre-refactor branch)
+- **Git tag:** `v1-legacy` 
+- **Directory:** [`pyperch/optim/`](https://github.com/jlm429/pyperch/tree/legacy/pyperch/optim)
 
 The new refactored optimizers can be found under:
 
