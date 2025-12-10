@@ -13,6 +13,7 @@ dependencies = [
     "notebook>=7.5.0,<8.0.0",
     "scikit-learn>=1.7.2,<2.0.0",
     "pytest>=9.0.2,<10.0.0",
+    "optuna>=3.6.0,<4.0.0",
 ]
 
 # --- Build System ---
@@ -25,9 +26,6 @@ build-backend = "setuptools.build_meta"
 dev = [
     "black>=25.11.0,<26.0.0",
     "ruff>=0.14.8,<0.15.0",
-]
-optuna = [
-    "optuna>=3.6.0,<4.0.0",
 ]
 
 # --- Ruff Config ---
