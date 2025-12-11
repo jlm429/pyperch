@@ -1,6 +1,6 @@
 [project]
 name = "pyperch"
-version = "0.2.0"
+version = "0.2.1"
 description = "pyperch refactor"
 requires-python = ">=3.10"
 readme = "README.md"
@@ -10,9 +10,8 @@ dependencies = [
     "torch",
     "numpy",
     "matplotlib",
-    "notebook>=7.5.0,<8.0.0",
     "scikit-learn>=1.7.2,<2.0.0",
-    "pytest>=9.0.2,<10.0.0",
+    "pytest>=9.0.2,<10.0.0", # workaround for circleci 
     "optuna>=3.6.0,<4.0.0",
 ]
 
