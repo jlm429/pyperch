@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="pyperch",
-    version="0.2.1",
+    version="0.2.2",
     url="https://github.com/jlm429/pyperch",
     author="John Mansfield",
     author_email="jlm429@gmail.com",
@@ -17,6 +17,19 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     python_requires=">=3.10",
+    
+    # --- Python version support ---
+    python_requires=">=3.10",
+
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    
     install_requires=[
         "torch",
         "numpy",

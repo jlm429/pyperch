@@ -8,9 +8,7 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
 
-A lightweight, modular library for **neural network weight optimization** using randomized search algorithms built directly on top of **PyTorch**. Pyperch provides flexible alternatives to gradient-based optimization, enabling experimentation with Randomized Hill Climbing, Simulated Annealing, and Genetic Algorithms - as well as hybrid approaches where these methods work alongside traditional optimizers like Adam or SGD.
-
-The current version introduces a unified training API, improved configuration system, deterministic behavior, and a cleaner separation between optimization logic and training.
+A lightweight, modular library for **neural network weight optimization** using randomized search algorithms built directly on top of **PyTorch**.  Pyperch is a research and teaching-oriented library for training neural networks using randomized optimization methods (RHC, SA, GA), gradient-based methods, and hybrid combinations.
 
 ---
 
