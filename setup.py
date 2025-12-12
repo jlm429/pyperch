@@ -16,7 +16,6 @@ setup(
     platforms=["Any"],
     packages=find_packages(),
     include_package_data=True,
-    python_requires=">=3.10",
     
     # --- Python version support ---
     python_requires=">=3.10",
