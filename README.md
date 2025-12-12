@@ -67,9 +67,32 @@ poetry install
 
 ---
 
-## Quick Start and Examples (Coming Soon)
+## API and Examples
 
-will be added after the refactor merge:
+The public API and usage examples are documented and organized as follows:
+
+### API Documentation
+
+The user-facing APIs are documented under:
+
+- [`docs/api/entrypoints/`](docs/api/entrypoints)
+
+Key entry points include:
+- **Perch Builder API** - experiment construction, training, and hybrid optimization
+- **Optuna Search API** - hyperparameter search using an adapter-based Optuna integration
+
+### Examples
+
+Notebook/colab examples showing common workflows can be found in:
+
+- [`examples/`](examples)
+
+The examples cover:
+- Classification and regression
+- Randomized optimization (RHC, SA, GA)
+- Gradient and hybrid optimization
+- Layer freezing and meta-optimization
+- Optuna-based hyperparameter search
 
 ---
 
