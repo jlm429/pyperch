@@ -129,4 +129,4 @@ The following components are public and stable:
 
 For a complete, working example of Optuna-based grid search, see the example notebook:
 
-- **[Optuna Search Example Notebook](../../../examples/Optuna_examples.ipynb)**
+- **[Optuna Search Example Notebook](../../../examples/grid_search.ipynb)**
