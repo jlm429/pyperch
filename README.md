@@ -76,8 +76,8 @@ The user-facing APIs are documented under:
 - [`docs/api/entrypoints/`](docs/api/entrypoints)
 
 Key entry points include:
-- **Perch Builder API** - experiment construction, training, and hybrid optimization
-- **Optuna Search API** - hyperparameter search using an adapter-based Optuna integration
+- **[Perch Builder API](docs/api/entrypoints/perch.md)** - experiment construction, training, and hybrid optimization
+- **[Optuna Search API](docs/api/entrypoints/optuna.md)** - hyperparameter search using an adapter-based Optuna integration
 
 ### Examples
 

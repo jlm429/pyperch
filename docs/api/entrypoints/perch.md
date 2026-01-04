@@ -204,3 +204,9 @@ Returns:
 
 - `Trainer` - fully configured trainer instance
 - `history` - dictionary of losses and metrics over time
+
+## Examples
+
+- **[Perch Builder RHC Example Notebook](../../../examples/RHC_examples.ipynb)**
+- **[Perch Builder SA Example Notebook](../../../examples/SA_examples.ipynb)**
+- **[Perch Builder GA Example Notebook](../../../examples/GA_examples.ipynb)**

@@ -124,3 +124,9 @@ The following components are public and stable:
 - `TrainerAdapter`
 - `OptunaSearch`
 - `SearchFactory`
+
+## Examples
+
+For a complete, working example of Optuna-based grid search, see the example notebook:
+
+- **[Optuna Search Example Notebook](../../../examples/Optuna_examples.ipynb)**
