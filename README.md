@@ -1,4 +1,4 @@
-# pyperch modified
+# pyperch
 
 ![PyPI](https://img.shields.io/pypi/v/pyperch.svg)
 ![Python Versions](https://img.shields.io/pypi/pyversions/pyperch.svg)
