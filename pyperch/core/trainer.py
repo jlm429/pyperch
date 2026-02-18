@@ -86,6 +86,15 @@ class Trainer:
                         weight_decay=tc.weight_decay,
                     )
 
+                elif name == "adamw":
+                    self.torch_optim = torch.optim.AdamW(
+                        self.grad_params,
+                        lr=tc.lr,
+                        betas=tc.betas,
+                        eps=tc.eps,
+                        weight_decay=tc.weight_decay,
+                    )
+
                 elif name == "sgd":
                     self.torch_optim = torch.optim.SGD(
                         self.grad_params,
