@@ -40,11 +40,11 @@ class TorchConfig:
     defaults to Adam(lr=1e-3).
     """
 
-    optimizer: str = "adam"  # adam | sgd | rmsprop
+    optimizer: str = "adam"  # adam | adamw | sgd | rmsprop
     lr: float = 1e-3
     weight_decay: float = 0.0
 
-    # Adam params
+    # Adam / AdamW params
     betas: tuple[float, float] = (0.9, 0.999)
     eps: float = 1e-8
 
