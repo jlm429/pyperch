@@ -8,47 +8,8 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
 
-A lightweight, modular library for **neural network weight optimization** using randomized search algorithms built directly on top of **PyTorch**.  Pyperch is a research and teaching-oriented library for training neural networks using randomized optimization methods (RHC, SA, GA), gradient-based methods, and hybrid combinations.
+A lightweight, modular library for neural network weight optimization using randomized search algorithms built directly on top of PyTorch.  Pyperch is a research and teaching-oriented library for training neural networks using randomized optimization methods (RHC, SA, GA), gradient-based methods, and hybrid combinations.
 
----
-
-## Key Features
-
-- **Randomized Optimization Algorithms**
-  - Randomized Hill Climbing (RHC)
-  - Simulated Annealing (SA)
-  - Genetic Algorithm (GA)
-
-- **Hybrid Training Support**  
-  Combine layer-wise modes (freeze, grad, meta) to mix gradient-free and gradient-based optimization in the same network.
-
-- **Unified Trainer API**  
-  An interface for classification, regression, batching, metrics, early stopping, and reproducibility.
-
-- **Pure PyTorch (No Skorch Dependency)**  
-  All examples are built on native PyTorch modules and DataLoader.
-
-- **Modern Configuration System**  
-  Structured configs (`TrainConfig`, `OptimizerConfig`, etc.) keep experiments consistent and explicit.
-
-- **Utility Functions Included**  
-  Metrics, plotting helpers, seed control, and structured outputs.
-
-- **Search Integration**
-  Optuna-based hyperparameter grid search (parallel-ready) for RHC/SA/GA tuning.
-
-- **Pure PyTorch**
-  No Skorch dependency; all examples use native PyTorch modules and DataLoader.
-  
-- **Modern Project Tooling**
-  - **Poetry** for dependencies, builds, and publishing  
-  - **Black** for code formatting  
-  - **Ruff** for linting and import sorting  
-  - **CircleCI** for automated testing 
-
-- **Utilities Included**
-  Metrics, plotting helpers, consistent seed control, and structured training outputs.
-  
 ---
 
 ## Installation
