@@ -1,45 +1,51 @@
 version: 2.1
 
-orbs:
-  python: circleci/python@2.1.1
-
 jobs:
   test:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.12
     steps:
       - checkout
+
+      - restore_cache:
+          keys:
+            - poetry-v1-{{ checksum "poetry.lock" }}
+            - poetry-v1-
 
       - run:
           name: Install Poetry
           command: |
-            curl -sSL https://install.python-poetry.org | python3 -
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-
-      - restore_cache:
-          keys:
-            - v2-poetry-cache-{{ checksum "poetry.lock" }}
-            - v2-poetry-cache-
+            python -m pip install --upgrade pip
+            pip install poetry
 
       - run:
-          name: Install dependencies with Poetry
+          name: Configure Poetry
           command: |
-            poetry install --no-interaction --no-root
+            poetry config virtualenvs.create true
+            poetry config virtualenvs.in-project true
+
+      - run:
+          name: Install dependencies
+          command: |
+            poetry install
 
       - save_cache:
-          key: v2-poetry-cache-{{ checksum "poetry.lock" }}
           paths:
-            - ~/.cache/pypoetry
+            - .venv
+          key: poetry-v1-{{ checksum "poetry.lock" }}
 
       - run:
-          name: Run pytest suite
+          name: Run Ruff
           command: |
-            poetry run pytest -q --disable-warnings --maxfail=1
+            poetry run ruff format --check .
+            poetry run ruff check .
+
+      - run:
+          name: Run tests
+          command: |
+            poetry run pytest
 
 workflows:
-  version: 2
   test:
     jobs:
       - test
-

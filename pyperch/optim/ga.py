@@ -7,261 +7,278 @@ Based on the original PyPerch optimizers by Jakub Owczarek
 
 These were also inspired by ABAGAIL’s randomized optimization algorithms - https://github.com/pushkar/ABAGAIL.
 
-Substantial refactoring and redesign by John Mansfield (2025).
+Substantial refactoring and redesign by John Mansfield (2026).
 """
 
 from __future__ import annotations
 
-from typing import Callable, List
+from collections.abc import Callable
 
-import numpy as np
 import torch
-from torch import Tensor
 
-Closure = Callable[[], float]
+from .base import RandomizedOptimizer
 
 
-def ga(
-    params: List[torch.Tensor],
-    random: np.random.Generator,
-    closure: Closure,
-    population_size: int = 50,
-    mutation_rate: float = 0.1,
-    step_size: float = 0.1,
-) -> float:
-    """Functional Genetic Algorithm step.
+class GA(RandomizedOptimizer):
+    """Genetic algorithm optimizer for arbitrary PyTorch models.
 
-    Mirrors the behavior of GA optimizer / ABAGAIL-style GA:
+    This optimizer builds a population around the current parameters,
+    evaluates candidate solutions, applies selection, crossover, mutation,
+    and adopts the best candidate when it improves the loss.
 
-    - Build a population around the current weights
-    - Evaluate fitness (lower loss = higher fitness)
-    - Sample parents via fitness-proportional selection
-    - Crossover to produce children
-    - Elite selection for the rest
-    - Mutate a portion of the population
-    - Re-evaluate and adopt the best individual with accept/reject
-
-    Only parameters with requires_grad=True are evolved.
+    Lower loss is assumed to be better.
     """
-    # Filter to trainable params, like the Optimizer version
-    trainable_params: List[Tensor] = [p for p in params if p.requires_grad]
 
-    if not trainable_params:
-        # Nothing to optimize
-        return closure()
+    def __init__(
+        self,
+        params,
+        population_size: int = 50,
+        mutation_rate: float = 0.1,
+        step_size: float = 0.1,
+        random_state: int | None = None,
+    ):
+        if population_size < 2:
+            raise ValueError("population_size must be at least 2.")
+        if mutation_rate < 0 or mutation_rate > 1:
+            raise ValueError("mutation_rate must be in the interval [0, 1].")
+        if step_size <= 0:
+            raise ValueError("step_size must be positive.")
 
-    # Baseline loss for accept/reject across all params
-    old_loss = closure()
+        defaults = {
+            "population_size": population_size,
+            "mutation_rate": mutation_rate,
+            "step_size": step_size,
+        }
 
-    with torch.no_grad():
-        for param in trainable_params:
-            # -----------------------------
-            # 1. Initialize population
-            # -----------------------------
-            population = _initialize_population(population_size, param, step_size)
+        super().__init__(params, defaults)
 
-            # -----------------------------
-            # 2. Evaluate population
-            # -----------------------------
-            probs, values = _evaluate(param, population, closure)
+        self.population_size = population_size
+        self.mutation_rate = mutation_rate
+        self.step_size = step_size
 
-            # Derive GA hyperparams to-mate / to-mutate
-            to_mate = max(1, population_size // 2)
-            to_mutate = max(
-                0, min(population_size, int(mutation_rate * population_size))
-            )
+        self._generator = torch.Generator()
+        if random_state is not None:
+            self._generator.manual_seed(random_state)
 
-            # -----------------------------
-            # 3. Crossover
-            # -----------------------------
-            children, child_values = _crossover(population, probs, random, to_mate)
+        self._initialized = False
+        self._current_loss: float | None = None
+        self._best_params: list[torch.Tensor] | None = None
 
-            # -----------------------------
-            # 4. Selection (elitism)
-            # -----------------------------
-            next_pop, next_vals = _selection(
-                population,
-                children,
-                values,
-                child_values,
-                probs,
-                random,
-                to_mate,
-            )
+    def step(self, closure: Callable[[], torch.Tensor]) -> torch.Tensor:
+        if closure is None:
+            raise ValueError("GA requires a closure that returns the loss.")
 
-            # -----------------------------
-            # 5. Mutation
-            # -----------------------------
-            next_pop = _mutate(next_pop, step_size, random, to_mutate)
+        if not self._initialized:
+            loss_tensor = self._evaluate_loss(closure)
+            loss = float(loss_tensor.detach().item())
 
-            # -----------------------------
-            # 6. Re-evaluate updated pop
-            # -----------------------------
-            next_vals = _reevaluate(param, next_pop, next_vals, closure)
+            self._initialized = True
+            self._current_loss = loss
+            self._update_best_loss(loss)
+            self._best_params = self._clone_params()
 
-            # -----------------------------
-            # 7. Update model weights
-            # -----------------------------
-            best_idx = int(np.argmin(next_vals))
-            best_weights = next_pop[best_idx]
+            return loss_tensor
 
-            old_param = param.clone()
-            param.copy_(best_weights)
+        current_params = self._clone_params()
+        current_loss = self._current_loss
 
-            new_loss = closure()
-            if new_loss > old_loss:
-                # Reject: revert to previous weights
-                param.copy_(old_param)
-            else:
-                # Accept and update running best loss
-                old_loss = new_loss
+        population = self._initialize_population(current_params)
+        population_losses = self._evaluate_population(population, closure)
 
-    return float(old_loss)
+        selected = self._select_population(population, population_losses)
+        children = self._crossover(selected)
+        children = self._mutate(children)
 
+        candidate_population = selected + children
+        candidate_losses = self._evaluate_population(candidate_population, closure)
 
-# --------------------------------------------------------------------
-# Utility functions
-# --------------------------------------------------------------------
+        best_idx = min(
+            range(len(candidate_losses)),
+            key=lambda idx: candidate_losses[idx],
+        )
 
+        best_candidate = candidate_population[best_idx]
+        best_candidate_loss = candidate_losses[best_idx]
 
-def _initialize_population(
-    pop_size: int,
-    param: Tensor,
-    step_size: float,
-) -> Tensor:
-    """Initialize a population around current param using Gaussian noise."""
-    return torch.stack(
-        [param + torch.randn_like(param) * step_size for _ in range(pop_size)]
-    )
+        self.proposed_steps += len(candidate_population)
 
+        if best_candidate_loss <= current_loss:
+            self._restore_params(best_candidate)
+            self.accepted_steps += 1
+            self._current_loss = best_candidate_loss
 
-def _evaluate(
-    param: Tensor,
-    population: Tensor,
-    closure: Closure,
-):
-    """Evaluate each individual in the population and build selection probs.
+            if self.best_loss is None or best_candidate_loss < self.best_loss:
+                self.best_loss = best_candidate_loss
+                self._best_params = self._clone_params()
 
-    Mirrors the 'evaluate' helper from the working GA:
+            return torch.tensor(best_candidate_loss)
 
-    - Temporarily copy individuals into the model param
-    - Compute losses
-    - Convert to minimization-based probabilities
-    """
-    old_param = param.clone()
-    values: list[float] = []
+        self._restore_params(current_params)
+        self.rejected_steps += 1
 
-    for indiv in population:
-        param.copy_(indiv)
-        loss = closure()
-        values.append(float(loss))
+        return torch.tensor(current_loss)
 
-    # Convert losses to probabilities (lower loss -> higher probability)
-    arr = np.asarray(values, dtype=float)
-    # scores proportional to "goodness": max - loss
-    scores = arr.max() - arr + 1e-8
+    def _evaluate_loss(
+        self,
+        closure: Callable[[], torch.Tensor],
+    ) -> torch.Tensor:
+        with torch.enable_grad():
+            loss_tensor = closure()
 
-    if not np.isfinite(scores).any() or scores.sum() <= 0:
-        probs = np.full_like(scores, 1.0 / len(scores), dtype=float)
-    else:
-        probs = scores / scores.sum()
+        self._record_eval(float(loss_tensor.detach().item()))
+        return loss_tensor
 
-    # Restore original parameter
-    param.copy_(old_param)
-    return probs, values
+    @torch.no_grad()
+    def _initialize_population(
+        self,
+        base_params: list[torch.Tensor],
+    ) -> list[list[torch.Tensor]]:
+        population = [base_params]
 
+        for _ in range(self.population_size - 1):
+            individual = []
 
-def _crossover(
-    pop: Tensor,
-    probs: np.ndarray,
-    rng: np.random.Generator,
-    to_mate: int,
-):
-    """ABAGAIL-style crossover: pick parents by roulette wheel and mix bits."""
-    if to_mate <= 0:
-        # No children
-        return torch.empty((0, *pop.shape[1:]), device=pop.device, dtype=pop.dtype), []
+            for param in base_params:
+                noise = torch.randn(
+                    param.shape,
+                    generator=self._generator,
+                    device=param.device,
+                    dtype=param.dtype,
+                )
 
-    idx = rng.choice(len(pop), size=(to_mate, 2), p=probs)
-    idx_t = torch.as_tensor(idx, dtype=torch.long, device=pop.device)
+                individual.append(param + self.step_size * noise)
 
-    p1 = pop[idx_t[:, 0]]
-    p2 = pop[idx_t[:, 1]]
+            population.append(individual)
 
-    # Uniform crossover mask
-    mask = torch.bernoulli(torch.full_like(p1, 0.5))
-    children = mask * p1 + (1 - mask) * p2
-    # Values are unknown until evaluated
-    child_values = [None] * to_mate
-    return children, child_values
+        return population
 
+    def _evaluate_population(
+        self,
+        population: list[list[torch.Tensor]],
+        closure: Callable[[], torch.Tensor],
+    ) -> list[float]:
+        original = self._clone_params()
+        losses = []
 
-def _selection(
-    pop: Tensor,
-    children: Tensor,
-    old_vals: list[float],
-    child_vals: list[float],
-    probs: np.ndarray,
-    rng: np.random.Generator,
-    to_mate: int,
-):
-    """Selection with elitism
+        for individual in population:
+            self._restore_params(individual)
 
-    - First fill slots with children.
-    - Remaining slots: sample survivors from old population.
-    """
-    pop_size = len(pop)
-    survivors = []
+            with torch.enable_grad():
+                loss_tensor = closure()
 
-    survivors_needed = pop_size - to_mate
-    for _ in range(survivors_needed):
-        idx = int(rng.choice(len(pop), p=probs))
-        survivors.append(pop[idx].clone())
+            loss = float(loss_tensor.detach().item())
+            self._record_eval()
+            losses.append(loss)
 
-    if survivors:
-        survivors_tensor = torch.stack(survivors, dim=0)
-        next_pop = torch.cat([children, survivors_tensor], dim=0)
-    else:
-        next_pop = children
+        self._restore_params(original)
+        return losses
 
-    # here we just carry old_vals
-    # (they will be overwritten in _reevaluate anyway).
-    combined_vals = np.array(
-        list(old_vals[:to_mate]) + [v for v in old_vals[to_mate:]], dtype=float
-    )
-    return next_pop, combined_vals
+    def _select_population(
+        self,
+        population: list[list[torch.Tensor]],
+        losses: list[float],
+    ) -> list[list[torch.Tensor]]:
+        keep_count = max(2, self.population_size // 2)
 
+        ranked_indices = sorted(
+            range(len(losses)),
+            key=lambda idx: losses[idx],
+        )
 
-def _mutate(
-    pop: Tensor,
-    strength: float,
-    rng: np.random.Generator,
-    to_mutate: int,
-) -> Tensor:
-    """Gaussian mutation of a subset of individuals."""
-    pop_size = len(pop)
-    if to_mutate <= 0 or pop_size == 0:
-        return pop
+        return [
+            self._clone_individual(population[idx])
+            for idx in ranked_indices[:keep_count]
+        ]
 
-    to_mutate = min(to_mutate, pop_size)
-    idx = rng.choice(pop_size, size=to_mutate, replace=False)
-    idx_t = torch.as_tensor(idx, dtype=torch.long, device=pop.device)
+    @torch.no_grad()
+    def _crossover(
+        self,
+        parents: list[list[torch.Tensor]],
+    ) -> list[list[torch.Tensor]]:
+        child_count = self.population_size - len(parents)
+        children = []
 
-    noise = torch.randn_like(pop[idx_t]) * strength
-    pop[idx_t] += noise
-    return pop
+        for _ in range(child_count):
+            idx1 = torch.randint(
+                low=0,
+                high=len(parents),
+                size=(1,),
+                generator=self._generator,
+            ).item()
 
+            idx2 = torch.randint(
+                low=0,
+                high=len(parents),
+                size=(1,),
+                generator=self._generator,
+            ).item()
 
-def _reevaluate(
-    param: Tensor,
-    pop: Tensor,
-    values,
-    closure: Closure,
-):
-    """Re-evaluate the whole population after mutation/selection."""
-    values = list(values)
-    for i in range(len(pop)):
-        param.copy_(pop[i])
-        loss = closure()
-        values[i] = float(loss)
-    return values
+            parent1 = parents[idx1]
+            parent2 = parents[idx2]
+
+            child = []
+
+            for p1, p2 in zip(parent1, parent2):
+                mask = (
+                    torch.rand(
+                        p1.shape,
+                        generator=self._generator,
+                        device=p1.device,
+                        dtype=p1.dtype,
+                    )
+                    < 0.5
+                )
+
+                child_param = torch.where(mask, p1, p2)
+                child.append(child_param)
+
+            children.append(child)
+
+        return children
+
+    @torch.no_grad()
+    def _mutate(
+        self,
+        population: list[list[torch.Tensor]],
+    ) -> list[list[torch.Tensor]]:
+        mutated = []
+
+        for individual in population:
+            new_individual = []
+
+            for param in individual:
+                mutation_mask = (
+                    torch.rand(
+                        param.shape,
+                        generator=self._generator,
+                        device=param.device,
+                        dtype=param.dtype,
+                    )
+                    < self.mutation_rate
+                )
+
+                noise = torch.randn(
+                    param.shape,
+                    generator=self._generator,
+                    device=param.device,
+                    dtype=param.dtype,
+                )
+
+                new_param = param + mutation_mask * self.step_size * noise
+                new_individual.append(new_param)
+
+            mutated.append(new_individual)
+
+        return mutated
+
+    @staticmethod
+    def _clone_individual(
+        individual: list[torch.Tensor],
+    ) -> list[torch.Tensor]:
+        return [param.detach().clone() for param in individual]
+
+    @torch.no_grad()
+    def restore_best(self) -> None:
+        """Restore the best parameters observed so far."""
+        if self._best_params is not None:
+            self._restore_params(self._best_params)

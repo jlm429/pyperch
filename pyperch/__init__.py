@@ -1,3 +1,5 @@
-from .core.trainer import Trainer
-from .config.schema import TrainConfig, OptimizerConfig, TorchConfig, ModelConfig
-from .builder import Perch
+"""PyPerch randomized optimizer rebuild package."""
+
+from .optim import RHC, RandomizedOptimizer
+
+__all__ = ["RandomizedOptimizer", "RHC"]

@@ -1,39 +1,51 @@
-[project]
+[tool.poetry]
 name = "pyperch"
-version = "0.2.2"
-description = "pyperch refactor"
-requires-python = ">=3.10"
+version = "0.3.0"
+description = "PyTorch-native randomized optimization algorithms."
+authors = ["John Mansfield"]
 readme = "README.md"
-license = { text = "MIT" }
-
-dependencies = [
-    "torch",
-    "numpy",
-    "matplotlib",
-    "scikit-learn>=1.7.2,<2.0.0",
-    "pytest>=9.0.2,<10.0.0", # workaround for circleci 
-    "optuna>=3.6.0,<4.0.0",
+license = "MIT"
+keywords = [
+    "pytorch",
+    "optimization",
+    "machine-learning",
+    "randomized-optimization",
 ]
 
-# --- Build System ---
+packages = [{ include = "pyperch" }]
+
+[tool.poetry.urls]
+Homepage = "https://github.com/jlm429/pyperch"
+Repository = "https://github.com/jlm429/pyperch"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+torch = ">=2.1,<3.0"
+numpy = ">=1.24"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+ruff = "^0.8.0"
+scikit-learn = "^1.4"
+matplotlib = "^3.8"
+
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
-# --- Optional Dependency Groups ---
-[project.optional-dependencies]
-dev = [
-    "black>=25.11.0,<26.0.0",
-    "ruff>=0.14.8,<0.15.0",
-]
-
-# --- Ruff Config ---
 [tool.ruff]
 line-length = 88
+target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "I"]
-ignore = ["E203"]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B905"]
 
-[tool.ruff.lint.isort]
-known-first-party = ["pyperch"]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

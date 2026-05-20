@@ -1,45 +1,21 @@
-# --- Python artifacts ---
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# Bytecode backup files
-*~
-
-# Torch model files
-*.pt
-*.pth
-
-# --- Virtual environments ---
-venv/
-.env/
 .venv/
+.env
+.env.*
 
-# Poetry virtual environment (if created locally)
-poetry.lock
+dist/
+build/
+*.egg-info/
 
-# --- Build artifacts ---
-/build/
-/dist/
-/*.egg-info/
-
-# --- IDE / Editor ---
-.idea/
-.vscode/
-
-# --- Jupyter ---
 .ipynb_checkpoints/
-notebooks/.ipynb_checkpoints/
+.DS_Store.idea/
 
-# --- Caches ---
-*.jython_cache
-/.ruff_cache/
-/.mypy_cache/
-/.pytest_cache/
-
-# --- OS-level files ---
 .DS_Store
-Thumbs.db
-
+.idea/
