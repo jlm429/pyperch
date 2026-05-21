@@ -25,25 +25,6 @@ Install dependencies with Poetry:
 poetry install
 ```
 
-Run the test suite:
-
-```bash
-poetry run pytest
-```
-
-Run linting and formatting checks:
-
-```bash
-poetry run ruff format .
-poetry run ruff check .
-```
-
-Build the package:
-
-```bash
-poetry build
-```
-
 Run an example:
 
 ```bash
