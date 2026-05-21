@@ -6,10 +6,10 @@ Train a model on digits, save it, reload it, freeze all but the last
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from torch import nn
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from torch import nn
 
 from pyperch.optim import RHC
 
@@ -118,9 +118,7 @@ torch.save(model.state_dict(), "digits_model.pt")
 # ------------------------------------------------------------
 model = MyNetwork()
 
-model.load_state_dict(
-    torch.load("digits_model.pt")
-)
+model.load_state_dict(torch.load("digits_model.pt"))
 
 print("\nLoaded pretrained model.")
 
@@ -187,7 +185,7 @@ final_first_layer_weight = model.layers[0].weight.detach()
 
 print(
     "Frozen first layer unchanged:",
-    torch.allclose(initial_first_layer_weight, final_first_layer_weight)
+    torch.allclose(initial_first_layer_weight, final_first_layer_weight),
 )
 
 print("Accepted steps:", optimizer.accepted_steps)
