@@ -1,8 +1,10 @@
 __pycache__/
 *.py[cod]
+
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+
 .coverage
 htmlcov/
 
@@ -15,7 +17,10 @@ build/
 *.egg-info/
 
 .ipynb_checkpoints/
-.DS_Store.idea/
 
 .DS_Store
 .idea/
+
+*.pt
+*.pth
+*.ckpt
