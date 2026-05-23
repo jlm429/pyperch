@@ -1,4 +1,3 @@
-from .grid import grid_search
-from .random import random_search
+from pyperch.search.optuna import OptunaSearch
 
-__all__ = ["grid_search", "random_search"]
+__all__ = ["OptunaSearch"]
