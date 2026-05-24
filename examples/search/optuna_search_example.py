@@ -74,11 +74,10 @@ search = OptunaSearch(
         "step_size": ("float", 0.01, 0.5, True),
         "temperature": ("float", 0.1, 2.0, True),
         "cooling": ("float", 0.90, 0.999),
-        "min_temperature": ("float", .001, .01, True),
+        "min_temperature": ("float", 0.001, 0.01, True),
     },
     direction="minimize",
 )
-
 
 
 # ------------------------------------------------------------
