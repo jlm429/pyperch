@@ -164,4 +164,4 @@ Supported directions:
 # Examples
 
 
-[optuna_search_example.py](../examples/optuna_search_example.py) 
+[optuna_search_example.py](../examples/search/optuna_search_example.py) 
