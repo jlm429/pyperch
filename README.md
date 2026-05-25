@@ -8,9 +8,27 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
 
-A lightweight library for neural network weight optimization using randomized search algorithms built directly on top of PyTorch.  Pyperch is a research and teaching-oriented library for training neural networks using randomized optimization methods (RHC, SA, GA), gradient-based methods, and hybrid combinations.
+A lightweight library for neural network weight optimization using randomized search algorithms built directly on top of PyTorch.  Pyperch is a research and teaching-oriented library for training neural networks using randomized optimization methods (RHC, SA, GA), gradient-based methods, and hybrid combinations.  
 
-## Getting Started
+PyPerch also includes optional hyperparameter search utilities layered on top of the standalone optimizers.
+
+## Installation
+
+Install from PyPI:
+
+```bash
+pip install pyperch
+```
+
+or with Poetry:
+
+```bash
+poetry add pyperch
+```
+
+---
+
+## Development Setup
 
 Clone the repository:
 
@@ -19,14 +37,61 @@ git clone https://github.com/jlm429/pyperch.git
 cd pyperch
 ```
 
-Install dependencies with Poetry:
+Install development dependencies:
 
 ```bash
 poetry install
 ```
 
-Run an example:
+---
+
+# Examples
+
+The fastest way to get started with PyPerch is to explore the examples.
+
+See:
+
+[Examples](../examples/standalone)
+
+[Optuna Search](../examples/search/optuna_search_example.py) 
+
+---
+
+# Documentation
+
+See:
+
+[General Usage Guide](docs/general_usage_guide.md)
+
+[Search Usage Guide](docs/search_usage_guide.md) 
+
+---
+
+# Contributing
+
+Pull requests are welcome.
+
+Setup:
 
 ```bash
-poetry run python examples/standalone/rhc/transfer_nn_example.py
+poetry install
 ```
+
+Format code:
+
+```bash
+poetry run ruff format .
+```
+
+Lint code:
+
+```bash
+poetry run ruff check .
+```
+
+Typical workflow:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit changes
+4. Open a pull request
