@@ -51,9 +51,9 @@ The fastest way to get started with PyPerch is to explore the examples.
 
 See:
 
-[Examples](../examples/standalone)
+[Examples](/examples/standalone/)
 
-[Optuna Search](../examples/search/optuna_search_example.py) 
+[Optuna Search](/examples/search/optuna_search_example.py) 
 
 ---
 
@@ -63,7 +63,7 @@ See:
 
 [General Usage Guide](docs/general_usage_guide.md)
 
-[Search Usage Guide](docs/search_usage_guide.md) 
+[Search Usage Guide](docs/search.md) 
 
 ---
 
