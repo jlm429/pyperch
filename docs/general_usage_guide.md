@@ -1,6 +1,10 @@
-# General Usage Guide 
+# General Usage Guide
 
-PyPerch optimizers can be used directly with standard PyTorch models and training loops.  The standalone optimizers are meant to behave like drop-in-ish PyTorch optimizers, not as a separate neural-network framework. You bring your own `torch.nn.Module`, loss function, data tensors, evaluation code, and training loop. PyPerch provides randomized optimization algorithms (RHC, SA, GA) that operate directly on model parameters.  If your model works in PyTorch, it should generally work with PyPerch optimizers.
+PyPerch optimizers can be used directly with standard PyTorch models and training loops. The standalone optimizers are meant to behave like drop-in-ish PyTorch optimizers, not as a separate neural-network framework.
+
+You bring your own `torch.nn.Module`, loss function, data tensors, evaluation code, and training loop. PyPerch provides randomized optimization algorithms (RHC, SA, GA) that operate directly on model parameters.
+
+If your model works in PyTorch, it should generally work with PyPerch optimizers.
 
 ---
 
@@ -75,14 +79,20 @@ from pyperch.optim import RHC
 optimizer = RHC(
     model.parameters(),
     step_size=0.1,
+    restarts=0,
+    restart_interval=None,
     random_state=42,
 )
 ```
 
-Common parameters:
+Parameters:
 
-- `step_size`
-- `random_state`
+- `step_size`: scale of the random parameter perturbation.
+- `restarts`: maximum number of random restarts.
+- `restart_interval`: number of proposed steps between restarts. Use `None` to disable.
+- `random_state`: optional seed for reproducible random proposals.
+
+RHC accepts candidate moves only when they do not increase the loss.
 
 ---
 
@@ -93,21 +103,23 @@ from pyperch.optim import SA
 
 optimizer = SA(
     model.parameters(),
-    step_size=0.05,
+    step_size=0.1,
     temperature=1.0,
-    cooling=0.995,
-    min_temperature=0.001,
+    min_temperature=0.1,
+    cooling=0.95,
     random_state=42,
 )
 ```
 
-Additional SA parameters:
+Parameters:
 
-- `temperature`
-- `cooling`
-- `min_temperature`
+- `step_size`: scale of the random parameter perturbation.
+- `temperature`: initial annealing temperature.
+- `min_temperature`: lower bound for the temperature.
+- `cooling`: multiplicative cooling rate applied after each step.
+- `random_state`: optional seed for reproducible random proposals.
 
-SA may temporarily accept worse solutions early in training to encourage exploration.
+SA may temporarily accept worse solutions while the temperature is high.
 
 ---
 
@@ -118,35 +130,40 @@ from pyperch.optim import GA
 
 optimizer = GA(
     model.parameters(),
-    population_size=100,
+    population_size=50,
     mutation_rate=0.1,
-    step_size=0.05,
+    step_size=0.1,
     random_state=42,
 )
 ```
 
-Additional GA parameters:
+Parameters:
 
-- `population_size`
-- `mutation_rate`
+- `population_size`: number of candidate solutions per generation.
+- `mutation_rate`: probability that each parameter value is mutated.
+- `step_size`: scale of random initialization and mutation noise.
+- `random_state`: optional seed for reproducible population sampling.
 
-GA evolves a population of candidate solutions rather than a single parameter state.
-
----
-
-# Optimizer Counters
-
-PyPerch optimizers expose a small set of common counters to help inspect optimizer behavior.
-
-- `function_evals`: number of times the closure/loss function has been evaluated
-- `proposed_steps`: number of candidate parameter updates proposed
-- `accepted_steps`: number of proposed updates accepted
-- `rejected_steps`: number of proposed updates rejected
-- `best_loss`: best loss value observed by the optimizer
+GA evolves a population using selection, crossover, and mutation.
 
 ---
 
-# Example Gallery
+# Optimizer Counters and State
+
+PyPerch optimizers expose a small set of counters and state values to help inspect optimizer behavior.
+
+- `function_evals`: number of objective/loss evaluations.
+- `proposed_steps`: number of candidate updates proposed.
+- `accepted_steps`: number of proposed updates accepted.
+- `rejected_steps`: number of proposed updates rejected.
+- `best_loss`: best loss observed by the optimizer.
+- `restore_best()`: restores the best parameter values observed so far.
+
+RHC also exposes:
+
+- `completed_restarts`: number of restarts actually performed.
+
+---
 
 [RHC Examples](../examples/standalone/rhc) 
 
