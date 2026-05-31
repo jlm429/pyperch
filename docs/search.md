@@ -163,5 +163,18 @@ Supported directions:
 
 # Examples
 
+Examples are designed to be runnable in a standard Python environment, including Google Colab. In most cases, you should be able to pip install PyPerch then copy/paste the example code and run it. 
+
+*Note*: Search requires the optional Optuna dependency.
+
+```bash
+pip install pyperch optuna
+```
+
+Alternatively:
+
+```bash
+poetry install --extras "search"
+```
 
 [optuna_search_example.py](../examples/search/optuna_search_example.py) 
