@@ -164,6 +164,10 @@ RHC also exposes:
 - `completed_restarts`: number of restarts actually performed.
 
 ---
+# Examples
+
+Each example is designed to be runnable in a standard Python environment, including Google Colab. In most cases, you should be able to pip install PyPerch then copy/paste the example code and run it. 
+
 
 [RHC Examples](../examples/standalone/rhc) 
 
