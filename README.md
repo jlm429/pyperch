@@ -8,9 +8,7 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
 
-A lightweight library for neural network weight optimization using randomized search algorithms built directly on top of PyTorch.  Pyperch is a research and teaching-oriented library for training neural networks using randomized optimization methods (RHC, SA, GA), gradient-based methods, and hybrid combinations.  
-
-PyPerch also includes optional hyperparameter search utilities layered on top of the standalone optimizers.
+A lightweight library for neural network weight optimization using randomized search algorithms with PyTorch.  PyPerch includes optional hyperparameter search utilities layered on top of the standalone optimizers.
 
 ## Installation
 
@@ -70,28 +68,3 @@ See:
 # Contributing
 
 Pull requests are welcome.
-
-Setup:
-
-```bash
-poetry install
-```
-
-Format code:
-
-```bash
-poetry run ruff format .
-```
-
-Lint code:
-
-```bash
-poetry run ruff check .
-```
-
-Typical workflow:
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit changes
-4. Open a pull request
