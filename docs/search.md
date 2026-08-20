@@ -1,19 +1,19 @@
 # Optuna Search Usage Guide
 
-The `pyperch.search` package provides an optional, lightweight wrapper for Optuna-based hyperparameter search.
+The `pyperch.search` package provides a lightweight wrapper for Optuna-based hyperparameter search.
 
-This layer is intended for quick experimentation, tuning, demos, and research workflows while remaining fully compatible with standard PyTorch training patterns. 
-PyPerch search utilities do not abstract or replace PyTorch training loops.  
-Optuna is an optional dependency. Calling `OptunaSearch.search(...)` without Optuna installed raises an `ImportError`.
+This layer is intended for quick experimentation, tuning, demos, and research workflows while remaining fully compatible with standard PyTorch training patterns.
+PyPerch search utilities do not abstract or replace PyTorch training loops.
+Optuna is installed as a PyPerch dependency. Calling `OptunaSearch.search(...)` without Optuna available raises an `ImportError`.
 
 ---
 
 # Installation
 
-Install the optional Optuna dependency:
+Install PyPerch and its dependencies:
 
 ```bash
-poetry install --extras optuna
+pip install pyperch
 ```
 
 ---
@@ -163,18 +163,8 @@ Supported directions:
 
 # Examples
 
-Examples are designed to be runnable in a standard Python environment, including Google Colab. In most cases, you should be able to pip install PyPerch then copy/paste the example code and run it. 
+Examples are designed to be runnable in a standard Python environment, including Google Colab. In most cases, you should be able to pip install PyPerch then copy/paste the example code and run it.
 
-*Note*: Search requires the optional Optuna dependency.
+Search requires Optuna, which is installed with PyPerch.
 
-```bash
-pip install pyperch optuna
-```
-
-Alternatively:
-
-```bash
-poetry install --extras "search"
-```
-
-[optuna_search_example.py](../examples/search/optuna_search_example.py) 
+[optuna_search_example.py](../examples/search/optuna_search_example.py)
