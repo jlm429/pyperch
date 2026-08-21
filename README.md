@@ -28,7 +28,7 @@ poetry add pyperch
 
 ## Agent-assisted Experiments
 
-PyPerch's agentic harness supports agent-assisted experiments. One way to try this is with an [orchestrator-worker architecture](https://platform.claude.com/cookbook/patterns-agents-orchestrator-workers) like [FirstMate](https://github.com/kunchenguid/firstmate), which supports multiple coding-agent harnesses, including [Pi](https://pi.dev/).
+PyPerch's agentic harness supports agent-assisted experiments. One way to try this is with an [orchestrator-worker](https://platform.claude.com/cookbook/patterns-agents-orchestrator-workers) architecture like [FirstMate](https://github.com/kunchenguid/firstmate), which supports multiple coding-agent harnesses, including [Pi](https://pi.dev/).
 
 For example, give the orchestrator a task that combines implementation, validation, and parallel experimentation:
 
