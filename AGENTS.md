@@ -30,18 +30,8 @@ plus a thin Optuna search layer for optional hyperparameter studies.
 
 ## Validation
 
-Keep changes small and follow neighboring implementations, tests, examples, and
-documentation. The repository checks used by CI are:
-
-```bash
-poetry run ruff format --check .
-poetry run ruff check .
-poetry run pytest
-```
-
-Run the checks relevant to the change, and run all three for runtime changes.
-Documentation-only work must still validate links, referenced paths and commands,
-scope, and the complete diff.
+Follow the validation requirements and commands in the
+[Contributor Guide](CONTRIBUTING.md).
 
 ## Security
 
@@ -61,6 +51,7 @@ scope, and the complete diff.
 | Task | Read |
 | --- | --- |
 | Add or change an optimizer | [`.agents/skills/add-or-modify-optimizer/SKILL.md`](.agents/skills/add-or-modify-optimizer/SKILL.md) |
+| Run a comparative experiment | [`.agents/skills/run-reproducible-experiment/SKILL.md`](.agents/skills/run-reproducible-experiment/SKILL.md) |
 | Other work | This guide and the nearest implementation, test, example, and documentation |
 
 ## Project documentation
@@ -68,6 +59,7 @@ scope, and the complete diff.
 - [General Usage Guide](docs/general_usage_guide.md)
 - [Optuna Search Usage Guide](docs/search.md)
 - [Runnable examples](examples/standalone/)
+- [Contributor Guide](CONTRIBUTING.md)
 
 ## Maintaining this file
 
