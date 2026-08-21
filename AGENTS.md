@@ -30,18 +30,8 @@ plus a thin Optuna search layer for optional hyperparameter studies.
 
 ## Validation
 
-Keep changes small and follow neighboring implementations, tests, examples, and
-documentation. The repository checks used by CI are:
-
-```bash
-poetry run ruff format --check .
-poetry run ruff check .
-poetry run pytest
-```
-
-Run the checks relevant to the change, and run all three for runtime changes.
-Documentation-only work must still validate links, referenced paths and commands,
-scope, and the complete diff.
+Follow the validation requirements and commands in the
+[Contributor Guide](CONTRIBUTING.md).
 
 ## Security
 

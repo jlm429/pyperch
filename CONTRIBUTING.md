@@ -13,10 +13,9 @@ losses, and training loops. Prefer focused changes over new abstraction layers.
   layer. Models, data, evaluation, devices, and training loops remain PyTorch code.
 - Avoid new dependencies unless the project requirement clearly needs one.
 
-PyPerch supports Python 3.10 through 3.13 and PyTorch 2.1 up to, but not including,
-3.0. `poetry install` installs the current runtime dependencies, including Optuna,
-and the development group with pytest, Ruff, scikit-learn, and Matplotlib. CircleCI
-installs that dependency set and runs on Python 3.12.
+The supported Python and PyTorch ranges and dependency groups are declared in
+`pyproject.toml`. `poetry install` installs the runtime and development dependency
+groups. CircleCI installs that dependency set and runs on Python 3.12.
 
 ## Validation
 
@@ -47,8 +46,8 @@ compatibility, or performance claims.
 - Compatibility changes should account for the declared Python and PyTorch ranges,
   constructor defaults, public imports, parameter dtype and device, and frozen
   parameters where relevant.
-- Experiment or performance claims need a fixed comparison protocol, reproducible
-  evidence, limitations, and a clear distinction between validation and test data.
+- Comparative experiments and performance claims should follow the
+  [reproducible experiment skill](.agents/skills/run-reproducible-experiment/SKILL.md).
 
 Keep the README focused on installation, user entry points, and links. Put detailed
 optimizer usage in `docs/general_usage_guide.md`, Optuna usage in `docs/search.md`,
@@ -65,11 +64,9 @@ review or green test suite as a substitute for understanding the algorithm and A
 
 ## Security
 
-Never commit or expose keys, tokens, credentials, `.env` files, authenticated or
-private URLs and endpoints, personal filesystem paths, or sensitive local experiment
-artifacts. Do not add telemetry, network calls, or downloads without a project
-requirement. Before submitting, inspect the diff and status for secrets, generated
-files, local artifacts, and unrelated changes.
+Follow the repository security requirements in `AGENTS.md`. Before submitting,
+inspect the diff and status for sensitive information, generated files, local
+artifacts, and unrelated changes.
 
 ## Pull requests
 
