@@ -26,7 +26,7 @@ poetry add pyperch
 
 ---
 
-# Agent-assisted Experiments
+## Agent-assisted Experiments
 
 PyPerch's agentic harness supports agent-assisted experiments. One way to try this is with an [orchestrator-worker architecture](https://platform.claude.com/cookbook/patterns-agents-orchestrator-workers) like [FirstMate](https://github.com/kunchenguid/firstmate), which supports multiple coding-agent harnesses, including [Pi](https://pi.dev/).
 
@@ -53,7 +53,7 @@ poetry install
 
 ---
 
-# Examples
+## Examples
 
 The fastest way to get started with PyPerch is to explore the examples.
 
@@ -65,7 +65,7 @@ See:
 
 ---
 
-# Documentation
+## Documentation
 
 See:
 
@@ -75,28 +75,7 @@ See:
 
 ---
 
-# Contributing
+## Contributing
 
 Pull requests are welcome.
 
-## Agent-assisted contributions
-
-Compatible coding agents should start with the canonical [agent guide](AGENTS.md).
-Claude Code loads the same guide through [`CLAUDE.md`](CLAUDE.md). Task-specific
-instructions are disclosed only when needed, such as the
-[`add-or-modify-optimizer`](.agents/skills/add-or-modify-optimizer/SKILL.md) skill.
-
-Repository-specific prompts can be concise:
-
-> Follow `AGENTS.md`. Compare `docs/search.md` with `pyproject.toml` and make only the
-> documentation corrections needed for accurate Optuna installation guidance.
-
-For a concrete follow-up that exercises the optimizer workflow:
-
-> Follow `AGENTS.md` and the `add-or-modify-optimizer` skill. Extend `GA` with an
-> optional uniform-crossover probability for choosing values from the first parent,
-> preserving the current hard-coded `0.5` behavior as the default, backward
-> compatibility, and native `model.parameters()` usage. Add focused tests, update a
-> runnable GA example, and document the option in the general usage guide. Do not
-> add framework abstractions or change the Optuna layer unless the concern genuinely
-> belongs there.
