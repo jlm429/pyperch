@@ -142,7 +142,9 @@ Parameters:
 - `population_size`: number of candidate solutions per generation.
 - `mutation_rate`: probability that each parameter value is mutated.
 - `step_size`: scale of random initialization and mutation noise.
-- `random_state`: optional seed for reproducible population sampling.
+- `random_state`: seed for GA's private random stream. An integer makes population
+  sampling reproducible without reading or changing PyTorch's global random state.
+  `None` creates a freshly seeded private stream.
 
 GA evolves a population using selection, crossover, and mutation.
 
@@ -173,4 +175,4 @@ Each example is designed to be runnable in a standard Python environment, includ
 
 [SA Examples](../examples/standalone/sa) 
 
-[GA Examples](../examples/standalone/ga) 
+[GA Examples](../examples/standalone/ga)

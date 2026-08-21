@@ -57,9 +57,14 @@ class GA(RandomizedOptimizer):
         self.step_size = step_size
 
         self._generator = torch.Generator()
-        if random_state is not None:
+        if random_state is None:
+            self._generator.seed()
+        else:
             self._generator.manual_seed(random_state)
 
+    def reset_counters(self) -> None:
+        """Reset counters and run-specific state without changing parameters."""
+        super().reset_counters()
         self._initialized = False
         self._current_loss: float | None = None
         self._best_params: list[torch.Tensor] | None = None
@@ -83,14 +88,16 @@ class GA(RandomizedOptimizer):
         current_loss = self._current_loss
 
         population = self._initialize_population(current_params)
-        population_losses = self._evaluate_population(population, closure)
+        population_losses, _ = self._evaluate_population(population, closure)
 
         selected = self._select_population(population, population_losses)
         children = self._crossover(selected)
         children = self._mutate(children)
 
         candidate_population = selected + children
-        candidate_losses = self._evaluate_population(candidate_population, closure)
+        candidate_losses, result_template = self._evaluate_population(
+            candidate_population, closure
+        )
 
         best_idx = min(
             range(len(candidate_losses)),
@@ -111,12 +118,12 @@ class GA(RandomizedOptimizer):
                 self.best_loss = best_candidate_loss
                 self._best_params = self._clone_params()
 
-            return torch.tensor(best_candidate_loss)
+            return result_template.detach().new_tensor(best_candidate_loss)
 
         self._restore_params(current_params)
         self.rejected_steps += 1
 
-        return torch.tensor(current_loss)
+        return result_template.detach().new_tensor(current_loss)
 
     def _evaluate_loss(
         self,
@@ -139,12 +146,7 @@ class GA(RandomizedOptimizer):
             individual = []
 
             for param in base_params:
-                noise = torch.randn(
-                    param.shape,
-                    generator=self._generator,
-                    device=param.device,
-                    dtype=param.dtype,
-                )
+                noise = self._randn_like(param)
 
                 individual.append(param + self.step_size * noise)
 
@@ -156,7 +158,7 @@ class GA(RandomizedOptimizer):
         self,
         population: list[list[torch.Tensor]],
         closure: Callable[[], torch.Tensor],
-    ) -> list[float]:
+    ) -> tuple[list[float], torch.Tensor]:
         original = self._clone_params()
         losses = []
 
@@ -171,7 +173,7 @@ class GA(RandomizedOptimizer):
             losses.append(loss)
 
         self._restore_params(original)
-        return losses
+        return losses, loss_tensor
 
     def _select_population(
         self,
@@ -219,15 +221,7 @@ class GA(RandomizedOptimizer):
             child = []
 
             for p1, p2 in zip(parent1, parent2):
-                mask = (
-                    torch.rand(
-                        p1.shape,
-                        generator=self._generator,
-                        device=p1.device,
-                        dtype=p1.dtype,
-                    )
-                    < 0.5
-                )
+                mask = self._rand_like(p1) < 0.5
 
                 child_param = torch.where(mask, p1, p2)
                 child.append(child_param)
@@ -247,22 +241,8 @@ class GA(RandomizedOptimizer):
             new_individual = []
 
             for param in individual:
-                mutation_mask = (
-                    torch.rand(
-                        param.shape,
-                        generator=self._generator,
-                        device=param.device,
-                        dtype=param.dtype,
-                    )
-                    < self.mutation_rate
-                )
-
-                noise = torch.randn(
-                    param.shape,
-                    generator=self._generator,
-                    device=param.device,
-                    dtype=param.dtype,
-                )
+                mutation_mask = self._rand_like(param) < self.mutation_rate
+                noise = self._randn_like(param)
 
                 new_param = param + mutation_mask * self.step_size * noise
                 new_individual.append(new_param)
@@ -270,6 +250,20 @@ class GA(RandomizedOptimizer):
             mutated.append(new_individual)
 
         return mutated
+
+    def _rand_like(self, reference: torch.Tensor) -> torch.Tensor:
+        return torch.rand(
+            reference.shape,
+            generator=self._generator,
+            dtype=reference.dtype,
+        ).to(reference.device)
+
+    def _randn_like(self, reference: torch.Tensor) -> torch.Tensor:
+        return torch.randn(
+            reference.shape,
+            generator=self._generator,
+            dtype=reference.dtype,
+        ).to(reference.device)
 
     @staticmethod
     def _clone_individual(
