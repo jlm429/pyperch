@@ -2002,4 +2002,4 @@ optuna = ["optuna"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "15d968f51a3c2163adc7923e9038d65f3237509f5b7bbc96edb1bb439b31b048"
+content-hash = "fad0b80470b5797113884a8fc6d91b082cb5992de0d80b101dc47b23ec5f73cd"
