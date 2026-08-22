@@ -94,7 +94,8 @@ search = OptunaSearch(
 # 1. Create a fresh model
 # 2. Create the optimizer using sampled params
 # 3. Train the model
-# 4. Return a scalar validation metric
+# 4. Restore the optimizer's best model weights
+# 5. Evaluate and return a scalar validation metric
 # ------------------------------------------------------------
 def objective(params, trial):
     torch.manual_seed(seed)

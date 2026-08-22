@@ -44,18 +44,7 @@ poetry add "pyperch[optuna]"
 
 ## Development Setup
 
-Clone the repository:
-
-```bash
-git clone https://github.com/jlm429/pyperch.git
-cd pyperch
-```
-
-Install development dependencies:
-
-```bash
-poetry install --extras optuna
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for source-checkout setup and validation.
 
 ---
 

@@ -14,17 +14,9 @@ raises an `ImportError` with the required install command.
 
 # Installation
 
-Install PyPerch with Optuna support:
-
-```bash
-pip install "pyperch[optuna]"
-```
-
-For a source checkout managed with Poetry, install the extra with:
-
-```bash
-poetry install --extras optuna
-```
+Install the optional Optuna extra as described in the
+[README installation guide](../README.md#installation). For a source checkout,
+follow the [contributor setup](../CONTRIBUTING.md#before-changing-code).
 
 ---
 
@@ -185,11 +177,5 @@ Supported directions:
 Examples are designed to be runnable in a standard Python environment, including
 Google Colab. In most cases, you should be able to install PyPerch, then copy and
 run the example code.
-
-Search requires the optional Optuna extra:
-
-```bash
-pip install "pyperch[optuna]"
-```
 
 [optuna_search_example.py](../examples/search/optuna_search_example.py)
