@@ -83,16 +83,18 @@ class RHC(RandomizedOptimizer):
             self._current_loss = candidate_loss
             self.accepted_steps += 1
             self._save_best_if_needed(candidate_loss)
-            return candidate_loss_tensor
+            result = candidate_loss_tensor
+        else:
+            self._restore_params(old_params)
+            self.rejected_steps += 1
+            result = torch.tensor(
+                old_loss,
+                dtype=candidate_loss_tensor.dtype,
+                device=candidate_loss_tensor.device,
+            )
 
-        self._restore_params(old_params)
-        self.rejected_steps += 1
         self._maybe_restart()
-        return torch.tensor(
-            old_loss,
-            dtype=candidate_loss_tensor.dtype,
-            device=candidate_loss_tensor.device,
-        )
+        return result
 
     def _evaluate(self, closure: Callable[[], torch.Tensor]) -> torch.Tensor:
         """Run the closure and count one objective evaluation."""

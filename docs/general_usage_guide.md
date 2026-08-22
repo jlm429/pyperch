@@ -89,10 +89,14 @@ Parameters:
 
 - `step_size`: scale of the random parameter perturbation.
 - `restarts`: maximum number of random restarts.
-- `restart_interval`: number of proposed steps between restarts. Use `None` to disable.
+- `restart_interval`: number of proposed steps between restarts, regardless of whether
+  the proposal at the interval boundary is accepted or rejected. Use `None` to
+  disable.
 - `random_state`: optional seed for reproducible random proposals.
 
 RHC accepts candidate moves only when they do not increase the loss.
+After a restart, the next call evaluates the randomized parameters without counting
+another proposed step.
 
 ---
 
