@@ -50,7 +50,7 @@ class OptunaSearch:
         except ImportError as exc:
             raise ImportError(
                 "Optuna support requires the optional dependency. "
-                "Install with: poetry install --extras optuna"
+                "Install with: pip install 'pyperch[optuna]'"
             ) from exc
 
         study = optuna.create_study(

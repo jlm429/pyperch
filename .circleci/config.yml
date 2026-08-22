@@ -27,7 +27,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            poetry install
+            poetry install --extras optuna
 
       - save_cache:
           paths:

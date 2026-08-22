@@ -1,20 +1,22 @@
 # Optuna Search Usage Guide
 
-The `pyperch.search` package provides a lightweight wrapper for Optuna-based hyperparameter search.
+The `pyperch.search` package provides an optional, lightweight wrapper for
+Optuna-based hyperparameter search.
 
-This layer is intended for quick experimentation, tuning, demos, and research workflows while remaining fully compatible with standard PyTorch training patterns.
+This layer is intended for quick experimentation, tuning, demos, and research
+workflows while remaining fully compatible with standard PyTorch training patterns.
 PyPerch search utilities do not abstract or replace PyTorch training loops.
-Optuna is installed as a PyPerch dependency. Calling `OptunaSearch.search(...)` without Optuna available raises an `ImportError`.
+Optuna is an optional dependency. Importing PyPerch and using its optimizers does
+not require Optuna. Calling `OptunaSearch.search(...)` without Optuna available
+raises an `ImportError` with the required install command.
 
 ---
 
 # Installation
 
-Install PyPerch and its dependencies:
-
-```bash
-pip install pyperch
-```
+Install the optional Optuna extra as described in the
+[README installation guide](../README.md#installation). For a source checkout,
+follow the [contributor setup](../CONTRIBUTING.md#before-changing-code).
 
 ---
 
@@ -67,6 +69,8 @@ def objective(params, trial):
             return loss_fn(output, y_train)
 
         optimizer.step(closure)
+
+    optimizer.restore_best()
 
     with torch.no_grad():
         valid_loss = loss_fn(model(X_valid), y_valid).item()
@@ -139,6 +143,13 @@ optimizer = SA(
 
 `search.search(...)` returns the underlying Optuna `Study`.
 
+The study retains trial hyperparameters and objective values, not PyTorch model
+weights. `study.best_params` is the hyperparameter dictionary from the best trial.
+It does not guarantee that a model left in memory has that trial's weights or even
+that an optimizer's current weights are its best observed weights. Explicitly
+retrain with `study.best_params`, call `optimizer.restore_best()`, and then evaluate
+the restored model.
+
 Common attributes:
 
 ```python
@@ -163,8 +174,8 @@ Supported directions:
 
 # Examples
 
-Examples are designed to be runnable in a standard Python environment, including Google Colab. In most cases, you should be able to pip install PyPerch then copy/paste the example code and run it.
-
-Search requires Optuna, which is installed with PyPerch.
+Examples are designed to be runnable in a standard Python environment, including
+Google Colab. In most cases, you should be able to install PyPerch, then copy and
+run the example code.
 
 [optuna_search_example.py](../examples/search/optuna_search_example.py)
