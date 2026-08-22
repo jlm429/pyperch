@@ -28,6 +28,18 @@ or with Poetry:
 poetry add pyperch
 ```
 
+Optuna search is an optional extra. Install it from PyPI with:
+
+```bash
+pip install "pyperch[optuna]"
+```
+
+or with Poetry:
+
+```bash
+poetry add "pyperch[optuna]"
+```
+
 ---
 
 ## Development Setup
@@ -42,7 +54,7 @@ cd pyperch
 Install development dependencies:
 
 ```bash
-poetry install
+poetry install --extras optuna
 ```
 
 ---

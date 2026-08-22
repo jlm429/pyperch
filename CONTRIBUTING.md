@@ -14,8 +14,9 @@ losses, and training loops. Prefer focused changes over new abstraction layers.
 - Avoid new dependencies unless the project requirement clearly needs one.
 
 The supported Python and PyTorch ranges and dependency groups are declared in
-`pyproject.toml`. `poetry install` installs the runtime and development dependency
-groups. CircleCI installs that dependency set and runs on Python 3.12.
+`pyproject.toml`. `poetry install --extras optuna` installs the runtime and
+development dependency groups plus the optional search dependency. CircleCI installs
+that dependency set and runs on Python 3.12.
 
 ## Validation
 

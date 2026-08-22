@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import optuna
 import torch
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
@@ -77,6 +78,7 @@ search = OptunaSearch(
         "min_temperature": ("float", 0.001, 0.01, True),
     },
     direction="minimize",
+    study_kwargs={"sampler": optuna.samplers.TPESampler(seed=seed)},
 )
 
 
@@ -105,6 +107,7 @@ def objective(params, trial):
         temperature=params["temperature"],
         cooling=params["cooling"],
         min_temperature=params["min_temperature"],
+        random_state=seed,
     )
 
     for _ in range(3000):
@@ -114,6 +117,8 @@ def objective(params, trial):
             return loss_fn(output, y_train)
 
         optimizer.step(closure)
+
+    optimizer.restore_best()
 
     with torch.no_grad():
         valid_loss = loss_fn(model(X_valid), y_valid).item()
@@ -153,6 +158,7 @@ best_optimizer = SA(
     temperature=best_params["temperature"],
     cooling=best_params["cooling"],
     min_temperature=best_params["min_temperature"],
+    random_state=seed,
 )
 
 train_losses = []
@@ -170,6 +176,18 @@ for _ in range(3000):
     with torch.no_grad():
         valid_loss = loss_fn(best_model(X_valid), y_valid).item()
         valid_losses.append(valid_loss)
+
+best_optimizer.restore_best()
+
+with torch.no_grad():
+    best_train_loss = loss_fn(best_model(X_train), y_train).item()
+    best_valid_loss = loss_fn(best_model(X_valid), y_valid).item()
+
+print("\nRetrained best training loss:")
+print(best_train_loss)
+
+print("\nRetrained best validation loss:")
+print(best_valid_loss)
 
 
 # ------------------------------------------------------------
