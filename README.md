@@ -70,6 +70,16 @@ See:
 
 ---
 
+## Agent-assisted Experiments
+
+PyPerch's agentic harness supports agent-assisted experiments. One way to try this is with an [orchestrator-worker](https://platform.claude.com/cookbook/patterns-agents-orchestrator-workers) architecture like [FirstMate](https://github.com/kunchenguid/firstmate), which supports multiple coding-agent harnesses, including [Pi](https://pi.dev/).
+
+For example, ask the orchestrator to make a small optimizer change, validate it, and then run parallel experiments:
+
+> Follow `AGENTS.md` and load the relevant skill(s). For local experimentation only, add an optional GA uniform-crossover parameter while preserving the existing `0.5` default, backward compatibility, and native PyTorch usage. Once tests pass, freeze the implementation. Using the Iris dataset and a small PyTorch MLP, run two independent Optuna experiments with the same search space and different random seeds. Report the best trial, best parameters, objective value, number of trials, and limitations for each run, then compare the results. Do not claim the change improves GA unless the evidence supports it. Do not push or open a PR.
+
+---
+
 ## Contributing
 
 Pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the project
