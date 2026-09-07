@@ -174,8 +174,9 @@ Supported directions:
 
 # Examples
 
-Examples are designed to be runnable in a standard Python environment, including
-Google Colab. In most cases, you should be able to install PyPerch, then copy and
-run the example code.
-
-[optuna_search_example.py](../examples/search/optuna_search_example.py)
+The [executed Optuna notebook](../examples/notebooks/04_optuna_tuning.ipynb)
+shows repeated trial objectives, native study history, best-parameter refitting,
+and final test evaluation. Its model training curves use the
+[public plotting API](plotting.md), which consumes existing result arrays and
+requires caller-owned Matplotlib Axes. Follow the
+[notebook setup and execution guide](../examples/README.md) to run it independently.

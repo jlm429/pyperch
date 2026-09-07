@@ -41,6 +41,20 @@ paths and commands, scope, and the complete diff. Tests are necessary evidence, 
 they do not by themselves establish algorithm correctness, API quality, backward
 compatibility, or performance claims.
 
+For notebook or plotting changes, also install the notebook extra and execute every
+notebook from a fresh kernel:
+
+```bash
+poetry install --extras notebooks
+poetry run python scripts/execute_notebooks.py
+```
+
+Save actual outputs and visually inspect every figure for units, legends,
+uncertainty meaning, legibility, and clipping. Ruff checks notebook code cells as
+part of the commands above. See [examples/README.md](examples/README.md) for
+protocols, execution details, and HTML export. The plotting contract and accepted
+array shapes live in [docs/plotting.md](docs/plotting.md).
+
 ## Change expectations
 
 - Runtime changes need focused tests for observable behavior and documentation when

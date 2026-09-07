@@ -23,8 +23,9 @@ plus a thin Optuna search layer for optional hyperparameter studies.
 | `pyperch/optim/` | PyTorch optimizer base and RHC, SA, and GA implementations |
 | `pyperch/search/` | Thin Optuna search support and small search utilities |
 | `tests/` | Focused optimizer and search tests |
-| `examples/standalone/` | Runnable PyTorch optimizer examples |
-| `examples/search/` | Runnable Optuna search example |
+| `pyperch/plotting/` | Result preparation and rendering on caller-owned Axes |
+| `examples/notebooks/` | Executed concept-led PyTorch and Optuna notebooks |
+| `examples/README.md` | Notebook execution, protocols, and old-example mapping |
 | `docs/` | General optimizer and search usage guides |
 | `pyproject.toml` | Supported Python versions, dependencies, and tool settings |
 
@@ -58,7 +59,8 @@ Follow the validation requirements and commands in the
 
 - [General Usage Guide](docs/general_usage_guide.md)
 - [Optuna Search Usage Guide](docs/search.md)
-- [Runnable examples](examples/standalone/)
+- [Executed notebooks](examples/README.md)
+- [Plotting API](docs/plotting.md)
 - [Contributor Guide](CONTRIBUTING.md)
 
 ## Maintaining this file

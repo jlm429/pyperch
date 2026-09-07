@@ -172,11 +172,12 @@ RHC also exposes:
 ---
 # Examples
 
-Each example is designed to be runnable in a standard Python environment, including Google Colab. In most cases, you should be able to pip install PyPerch then copy/paste the example code and run it. 
+The executed notebooks keep models, losses, loops, and evaluation visible. Follow
+the [notebook environment guide](../examples/README.md) for optional dependencies
+and fresh execution commands.
 
+[Native training notebook](../examples/notebooks/01_native_training.ipynb)
 
-[RHC Examples](../examples/standalone/rhc) 
+[RHC, SA, GA, and Adam comparison](../examples/notebooks/02_optimizer_comparison.ipynb)
 
-[SA Examples](../examples/standalone/sa) 
-
-[GA Examples](../examples/standalone/ga)
+[Plotting API](plotting.md) and [all notebooks](../examples/README.md)
