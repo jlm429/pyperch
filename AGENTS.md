@@ -22,7 +22,7 @@ plus a thin Optuna search layer for optional hyperparameter studies.
 | --- | --- |
 | `pyperch/optim/` | PyTorch optimizer base and RHC, SA, and GA implementations |
 | `pyperch/search/` | Thin Optuna search support and small search utilities |
-| `tests/` | Focused optimizer and search tests |
+| `tests/` | Focused optimizer, search, and plotting tests |
 | `pyperch/plotting/` | Result preparation and rendering on caller-owned Axes |
 | `examples/notebooks/` | Executed concept-led PyTorch and Optuna notebooks |
 | `examples/README.md` | Notebook execution, protocols, and old-example mapping |

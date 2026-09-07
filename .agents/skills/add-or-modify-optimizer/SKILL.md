@@ -13,7 +13,7 @@ optimizer-specific detail that does not belong in the always-loaded guide.
 1. Read the algorithm carefully enough to identify its state, proposal, acceptance,
    evaluation, and randomization rules before choosing an API.
 2. Inspect `pyperch/optim/base.py`, neighboring optimizer implementations,
-   `tests/optim/`, the matching `examples/standalone/` directories, and
+   `tests/optim/`, the relevant notebooks listed in `examples/README.md`, and
    `docs/general_usage_guide.md`. Check public exports when adding a class.
 3. For a bug fix, reproduce the user-visible failure through a normal PyTorch usage
    path before changing code.
@@ -53,8 +53,9 @@ optimizer-specific detail that does not belong in the always-loaded guide.
   counters and state, reproducibility where relevant, frozen parameters, and backward
   compatibility affected by the change. Prefer observable behavior over private
   implementation assertions.
-- Add or update a runnable example under `examples/standalone/<optimizer>/` that uses
-  a normal `torch.nn.Module`, native parameters, a loss closure, and an ordinary loop.
+- Update the relevant notebook listed in `examples/README.md` with a runnable
+  example using a normal `torch.nn.Module`, native parameters, a loss closure, and
+  an ordinary loop. Follow that guide for notebook setup and execution.
 - Update `docs/general_usage_guide.md`, public exports, and README links only as the
   public change requires.
 

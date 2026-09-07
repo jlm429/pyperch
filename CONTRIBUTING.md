@@ -17,8 +17,8 @@ poetry install --extras optuna
 - Read `AGENTS.md` and the nearest implementation, tests, example, and guide.
 - Check the worktree for unrelated changes and keep the patch reviewable.
 - Reproduce bugs through a normal end-to-end PyTorch usage path before fixing them.
-- Confirm that the concern belongs in PyPerch optimizer behavior or its thin Optuna
-  layer. Models, data, evaluation, devices, and training loops remain PyTorch code.
+- Confirm that the concern fits the project scope in [AGENTS.md](AGENTS.md) and,
+  for plotting, the [plotting contract](docs/plotting.md).
 - Avoid new dependencies unless the project requirement clearly needs one.
 
 The supported Python and PyTorch ranges and dependency groups are declared in
