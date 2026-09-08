@@ -50,13 +50,25 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source-checkout setup and validation.
 
 ## Examples
 
-The fastest way to get started with PyPerch is to explore the examples.
+Start with the [executed notebook progression](examples/README.md): native
+training and freezing, optimizer comparisons, learning and validation curves,
+then Optuna tuning. Each notebook explains what is measured and how to interpret
+the plots, and runs independently on a laptop CPU without dataset downloads.
 
-See:
+For a source checkout, install and launch with:
 
-[Examples](examples/standalone/)
+```bash
+poetry install --extras notebooks
+poetry run jupyter notebook examples/notebooks
+```
 
-[Optuna Search](examples/search/optuna_search_example.py)
+For plots in your own application, install `pip install 'pyperch[plotting]'` and
+use the [public plotting API](docs/plotting.md). It prepares existing results and
+renders onto your Matplotlib Axes. Learning curves use training-set sample count;
+training curves use iterations; validation curves use a hyperparameter.
+
+See the [examples guide](examples/README.md) for pip setup, fresh execution,
+practical runtimes, seeds, uncertainty bands, and the old-script migration map.
 
 ---
 
@@ -68,11 +80,7 @@ See:
 
 [Search Usage Guide](docs/search.md)
 
----
-
-## Agent-assisted Experiments
-
-PyPerch's agentic harness supports agent-assisted experiments. One way to try this is with an [orchestrator-worker](https://platform.claude.com/cookbook/patterns-agents-orchestrator-workers) architecture like [FirstMate](https://github.com/kunchenguid/firstmate), which supports multiple coding agents, including [Pi](https://pi.dev/).  
+[Plotting API and terminology](docs/plotting.md)
 
 ---
 

@@ -17,8 +17,8 @@ poetry install --extras optuna
 - Read `AGENTS.md` and the nearest implementation, tests, example, and guide.
 - Check the worktree for unrelated changes and keep the patch reviewable.
 - Reproduce bugs through a normal end-to-end PyTorch usage path before fixing them.
-- Confirm that the concern belongs in PyPerch optimizer behavior or its thin Optuna
-  layer. Models, data, evaluation, devices, and training loops remain PyTorch code.
+- Confirm that the concern fits the project scope in [AGENTS.md](AGENTS.md) and,
+  for plotting, the [plotting contract](docs/plotting.md).
 - Avoid new dependencies unless the project requirement clearly needs one.
 
 The supported Python and PyTorch ranges and dependency groups are declared in
@@ -40,6 +40,20 @@ for runtime changes. For documentation-only changes, validate links, referenced
 paths and commands, scope, and the complete diff. Tests are necessary evidence, but
 they do not by themselves establish algorithm correctness, API quality, backward
 compatibility, or performance claims.
+
+For notebook or plotting changes, also install the notebook extra and execute every
+notebook from a fresh kernel:
+
+```bash
+poetry install --extras notebooks
+poetry run python scripts/execute_notebooks.py
+```
+
+Save actual outputs and visually inspect every figure for units, legends,
+uncertainty meaning, legibility, and clipping. Ruff checks notebook code cells as
+part of the commands above. See [examples/README.md](examples/README.md) for
+protocols, execution details, and HTML export. The plotting contract and accepted
+array shapes live in [docs/plotting.md](docs/plotting.md).
 
 ## Change expectations
 
