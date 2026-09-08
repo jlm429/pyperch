@@ -25,7 +25,7 @@ plus a thin Optuna search layer for optional hyperparameter studies.
 | `tests/` | Focused optimizer, search, and plotting tests |
 | `pyperch/plotting/` | Result preparation and rendering on caller-owned Axes |
 | `examples/notebooks/` | Executed concept-led PyTorch and Optuna notebooks |
-| `examples/README.md` | Notebook execution, protocols, and old-example mapping |
+| `examples/README.md` | Notebook setup and reproducibility guidance |
 | `docs/` | General optimizer and search usage guides |
 | `pyproject.toml` | Supported Python versions, dependencies, and tool settings |
 

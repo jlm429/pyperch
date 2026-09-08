@@ -61,7 +61,7 @@ dependencies and extra markers.
 
 ## Notebook progression and old-example coverage
 
-The [complete migration map](../examples/README.md#complete-migration-map) lists
+The [archived migration map](https://github.com/jlm429/pyperch/blob/f6a76ede7dc8738c4dcdad07c17eed32e823343d/examples/README.md#complete-migration-map) lists
 every original path and retained workflow. Ten scripts become four notebooks:
 
 1. Native training, regression, digits save/reload, frozen features, and hybrid

@@ -51,9 +51,16 @@ poetry run python scripts/execute_notebooks.py
 
 Save actual outputs and visually inspect every figure for units, legends,
 uncertainty meaning, legibility, and clipping. Ruff checks notebook code cells as
-part of the commands above. See [examples/README.md](examples/README.md) for
-protocols, execution details, and HTML export. The plotting contract and accepted
-array shapes live in [docs/plotting.md](docs/plotting.md).
+part of the commands above. Export HTML for visual review with the classic template,
+which preserves the plots' descriptive alt text:
+
+```bash
+poetry run jupyter nbconvert --to html --template classic --output-dir build/notebooks \
+  examples/notebooks/*.ipynb
+```
+
+See [examples/README.md](examples/README.md) for notebook setup and reproducibility.
+The plotting contract and accepted array shapes live in [docs/plotting.md](docs/plotting.md).
 
 ## Change expectations
 
