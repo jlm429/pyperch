@@ -56,25 +56,22 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source-checkout setup and validation.
 
 ## Examples
 
-Start with the [executed notebook progression](examples/README.md). It begins with
-RHC in a normal PyTorch loop, continues through frozen and separately optimized
-layers, then compares RHC, SA, and GA. Later notebooks cover plotting recorded
-results and optional Optuna tuning. Each runs independently on a laptop CPU without
-dataset downloads.
+PyPerch's RHC, SA, and GA optimizers operate directly on the parameters of standard
+PyTorch models. Bring your own `torch.nn.Module`, loss function, data tensors,
+evaluation code, and training loop. If a model works in PyTorch, it should generally
+work with PyPerch optimizers.
 
-For a source checkout, install and launch with:
+- [Native training](examples/notebooks/01_native_training.ipynb): Use RHC in a
+  PyTorch training loop, including frozen layers and separate Adam/RHC updates.
+- [Optimizer comparison](examples/notebooks/02_optimizer_comparison.ipynb): Compare
+  RHC, SA, GA, and Adam across repeated runs.
+- [Learning and validation curves](examples/notebooks/03_learning_and_validation.ipynb):
+  Explore training set size, model capacity, and generalization.
+- [Optuna tuning](examples/notebooks/04_optuna_tuning.ipynb): Tune optimizer settings
+  with repeated Optuna trials and evaluate the final model.
 
-```bash
-poetry install --extras notebooks
-poetry run jupyter notebook examples/notebooks
-```
-
-For plots in your own application, install `pip install 'pyperch[plotting]'` and use
-the [public plotting API](docs/plotting.md). It prepares existing results and renders
-onto your Matplotlib Axes.
-
-See the [examples guide](examples/README.md) for notebook setup, practical runtimes,
-and reproducibility guidance.
+See the [examples guide](examples/README.md) for notebook-running instructions and
+reproducibility information.
 
 ---
 
