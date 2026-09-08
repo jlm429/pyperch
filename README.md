@@ -61,10 +61,10 @@ PyTorch models. Bring your own `torch.nn.Module`, loss function, data tensors,
 evaluation code, and training loop. If a model works in PyTorch, it should generally
 work with PyPerch optimizers.
 
-- [Native training](examples/notebooks/01_native_training.ipynb): Use RHC in a
+- [Native PyTorch training](examples/notebooks/01_native_training.ipynb): Use RHC in a
   PyTorch training loop, including frozen layers and separate Adam/RHC updates.
-- [Optimizer comparison](examples/notebooks/02_optimizer_comparison.ipynb): Compare
-  RHC, SA, GA, and Adam across repeated runs.
+- [Optimizer convergence and cost](examples/notebooks/02_optimizer_comparison.ipynb):
+  Compare RHC, SA, GA, and Adam across repeated runs.
 - [Learning and validation curves](examples/notebooks/03_learning_and_validation.ipynb):
   Explore training set size, model capacity, and generalization.
 - [Optuna tuning](examples/notebooks/04_optuna_tuning.ipynb): Tune optimizer settings
