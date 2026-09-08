@@ -67,8 +67,8 @@ use the [public plotting API](docs/plotting.md). It prepares existing results an
 renders onto your Matplotlib Axes. Learning curves use training-set sample count;
 training curves use iterations; validation curves use a hyperparameter.
 
-See the [examples guide](examples/README.md) for pip setup, fresh execution,
-practical runtimes, seeds, uncertainty bands, and the old-script migration map.
+See the [examples guide](examples/README.md) for notebook setup, practical runtimes,
+and reproducibility guidance.
 
 ---
 
