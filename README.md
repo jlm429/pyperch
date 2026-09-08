@@ -8,9 +8,15 @@
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
 
-A lightweight library for neural network weight optimization using randomized search
-algorithms with PyTorch. PyPerch includes optional hyperparameter search utilities
-layered on top of the standalone optimizers.
+PyPerch provides randomized hill climbing (RHC), simulated annealing (SA), and
+genetic algorithm (GA) optimizers for ordinary `torch.nn.Module` workflows. Pass
+native PyTorch parameter iterables, define the loss in a closure, and keep model
+architecture, data loading, forward passes, metrics, and training loops in PyTorch.
+
+Optional plotting utilities prepare recorded results for caller-owned Matplotlib
+Axes. A thin Optuna layer supports hyperparameter studies without hiding native
+trials or studies. Start with the [General Usage Guide](docs/general_usage_guide.md)
+for optimizer semantics and complete examples.
 
 ## Installation
 
@@ -50,10 +56,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source-checkout setup and validation.
 
 ## Examples
 
-Start with the [executed notebook progression](examples/README.md): native
-training and freezing, optimizer comparisons, learning and validation curves,
-then Optuna tuning. Each notebook explains what is measured and how to interpret
-the plots, and runs independently on a laptop CPU without dataset downloads.
+Start with the [executed notebook progression](examples/README.md). It begins with
+RHC in a normal PyTorch loop, continues through frozen and separately optimized
+layers, then compares RHC, SA, and GA. Later notebooks cover plotting recorded
+results and optional Optuna tuning. Each runs independently on a laptop CPU without
+dataset downloads.
 
 For a source checkout, install and launch with:
 
@@ -62,10 +69,9 @@ poetry install --extras notebooks
 poetry run jupyter notebook examples/notebooks
 ```
 
-For plots in your own application, install `pip install 'pyperch[plotting]'` and
-use the [public plotting API](docs/plotting.md). It prepares existing results and
-renders onto your Matplotlib Axes. Learning curves use training-set sample count;
-training curves use iterations; validation curves use a hyperparameter.
+For plots in your own application, install `pip install 'pyperch[plotting]'` and use
+the [public plotting API](docs/plotting.md). It prepares existing results and renders
+onto your Matplotlib Axes.
 
 See the [examples guide](examples/README.md) for notebook setup, practical runtimes,
 and reproducibility guidance.
@@ -74,13 +80,13 @@ and reproducibility guidance.
 
 ## Documentation
 
-See:
-
-[General Usage Guide](docs/general_usage_guide.md)
-
-[Search Usage Guide](docs/search.md)
-
-[Plotting API and terminology](docs/plotting.md)
+- [General Usage Guide](docs/general_usage_guide.md): RHC, SA, and GA in ordinary
+  PyTorch training loops
+- [Executed examples](examples/README.md): optimizer, freezing, composition, and
+  comparison workflows
+- [Plotting API and terminology](docs/plotting.md): prepare and render recorded
+  curves
+- [Search Usage Guide](docs/search.md): optional Optuna studies
 
 ---
 
