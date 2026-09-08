@@ -6,7 +6,7 @@ bundled data, with no dataset downloads.
 
 | Notebook | Description |
 | --- | --- |
-| [1. Native training](notebooks/01_native_training.ipynb) | Closures, checkpoints, frozen layers, and combined Adam/RHC updates. |
+| [1. Native training](notebooks/01_native_training.ipynb) | RHC closures, frozen layers, and separate Adam/RHC updates. |
 | [2. Optimizer comparison](notebooks/02_optimizer_comparison.ipynb) | RHC, SA, GA, and Adam convergence, measured objective calls, and variation across seeds. |
 | [3. Learning and validation curves](notebooks/03_learning_and_validation.ipynb) | Training sample counts, model capacity, and generalization. |
 | [4. Optuna tuning](notebooks/04_optuna_tuning.ipynb) | Repeated trial objectives, search history, and a final test evaluation. |
