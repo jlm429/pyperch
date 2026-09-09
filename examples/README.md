@@ -6,7 +6,7 @@ bundled data, with no dataset downloads.
 
 | Notebook | Description |
 | --- | --- |
-| [1. Native training](notebooks/01_native_training.ipynb) | RHC closures, frozen layers, and separate Adam/RHC updates. |
+| [1. Native training](notebooks/01_native_training.ipynb) | RHC closures, CUDA/MPS/CPU selection, frozen layers, and separate Adam/RHC updates. |
 | [2. Optimizer comparison](notebooks/02_optimizer_comparison.ipynb) | RHC, SA, GA, and Adam convergence, measured objective calls, and variation across seeds. |
 | [3. Learning and validation curves](notebooks/03_learning_and_validation.ipynb) | Training sample counts, model capacity, and generalization. |
 | [4. Optuna tuning](notebooks/04_optuna_tuning.ipynb) | Repeated trial objectives, search history, and a final test evaluation. |
@@ -26,9 +26,10 @@ set on a laptop CPU, plus installation and first-startup time. No GPU is needed.
 ## Reproducibility
 
 Each notebook specifies seeds, splits, preprocessing, architecture, metrics, and
-training budgets, and prints dependency versions. Runs use float32 on CPU with
-one Torch thread and deterministic operations. Results and timings can vary with
-hardware and dependency versions.
+training budgets, and prints dependency versions. Runs use float32 and deterministic
+operations. The first native-training workflow prefers CUDA, then MPS, and falls back
+to CPU; the remaining workflows use CPU with one Torch thread. Results and timings
+can vary with hardware and dependency versions.
 
 Three-seed curves show means with sample-standard-deviation bands unless labeled
 as an observed range. These describe variation across runs, not confidence

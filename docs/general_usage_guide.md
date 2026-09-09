@@ -92,7 +92,9 @@ Parameters:
 - `restart_interval`: number of proposed steps between restarts, regardless of whether
   the proposal at the interval boundary is accepted or rejected. Use `None` to
   disable.
-- `random_state`: optional seed for reproducible random proposals.
+- `random_state`: seed for RHC's private random stream. An integer makes proposal
+  sampling reproducible without reading or changing PyTorch's global random state.
+  `None` creates a freshly seeded private stream.
 
 RHC accepts candidate moves only when they do not increase the loss.
 After a restart, the next call evaluates the randomized parameters without counting
@@ -121,7 +123,9 @@ Parameters:
 - `temperature`: initial annealing temperature.
 - `min_temperature`: lower bound for the temperature.
 - `cooling`: multiplicative cooling rate applied after each step.
-- `random_state`: optional seed for reproducible random proposals.
+- `random_state`: seed for SA's private random stream. An integer makes proposal and
+  acceptance sampling reproducible without reading or changing PyTorch's global
+  random state. `None` creates a freshly seeded private stream.
 
 SA may temporarily accept worse solutions while the temperature is high.
 
@@ -163,7 +167,12 @@ PyPerch optimizers expose a small set of counters and state values to help inspe
 - `accepted_steps`: number of proposed updates accepted.
 - `rejected_steps`: number of proposed updates rejected.
 - `best_loss`: best loss observed by the optimizer.
-- `restore_best()`: restores the best parameter values observed so far.
+- `restore_best()`: restores the best parameter values observed so far and allows
+  optimization to continue from that restored state.
+- `reset_counters()`: clears counters and starts fresh run bookkeeping from the
+  current model parameters without changing those parameters or rewinding the private
+  random stream. RHC restart progress and SA temperature also return to their initial
+  run values.
 
 RHC also exposes:
 
