@@ -119,3 +119,66 @@ def test_sa_reset_counters():
     assert optimizer.accepted_steps == 0
     assert optimizer.rejected_steps == 0
     assert optimizer.best_loss is None
+
+
+def test_sa_reset_counters_starts_fresh_run_and_temperature_schedule():
+    parameter = nn.Parameter(torch.tensor([0.0]))
+    optimizer = SA(
+        [parameter],
+        step_size=0.1,
+        temperature=2.0,
+        min_temperature=0.1,
+        cooling=0.5,
+        random_state=7,
+    )
+
+    def closure():
+        return parameter.square().sum()
+
+    optimizer.step(closure)
+    optimizer.step(closure)
+    assert optimizer.temperature == 1.0
+
+    with torch.no_grad():
+        parameter.fill_(5)
+    optimizer.reset_counters()
+    fresh_loss = optimizer.step(closure)
+
+    assert fresh_loss.item() == 25
+    assert optimizer.best_loss == 25
+    assert optimizer.function_evals == 1
+    assert optimizer.proposed_steps == 0
+    assert optimizer.accepted_steps == 0
+    assert optimizer.rejected_steps == 0
+    assert optimizer.temperature == 2.0
+
+    with torch.no_grad():
+        parameter.fill_(7)
+    optimizer.restore_best()
+
+    assert parameter.item() == 5
+
+
+def test_sa_restore_best_synchronizes_continued_optimization():
+    parameter = nn.Parameter(torch.tensor([0.0]))
+    optimizer = SA(
+        [parameter],
+        step_size=2.0,
+        temperature=1000.0,
+        min_temperature=1e-12,
+        cooling=1.0,
+        random_state=0,
+    )
+
+    def closure():
+        return parameter.square().sum()
+
+    optimizer.step(closure)
+    optimizer.step(closure)
+    optimizer.temperature = 1e-12
+    optimizer.restore_best()
+    optimizer.step(closure)
+
+    assert parameter.item() == 0
+    assert optimizer.accepted_steps == 1
+    assert optimizer.rejected_steps == 1

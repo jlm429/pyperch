@@ -49,3 +49,29 @@ class RandomizedOptimizer(torch.optim.Optimizer):
         """Update the best loss when improved."""
         if self.best_loss is None or loss < self.best_loss:
             self.best_loss = loss
+
+    @staticmethod
+    def _make_generator(random_state: int | None) -> torch.Generator:
+        """Create a private CPU generator with optional reproducible seeding."""
+        generator = torch.Generator()
+        if random_state is None:
+            generator.seed()
+        else:
+            generator.manual_seed(random_state)
+        return generator
+
+    def _rand_like(self, reference: torch.Tensor) -> torch.Tensor:
+        """Sample uniformly with the private CPU generator and preserve metadata."""
+        return torch.rand(
+            reference.shape,
+            generator=self._generator,
+            dtype=reference.dtype,
+        ).to(reference.device)
+
+    def _randn_like(self, reference: torch.Tensor) -> torch.Tensor:
+        """Sample normally with the private CPU generator and preserve metadata."""
+        return torch.randn(
+            reference.shape,
+            generator=self._generator,
+            dtype=reference.dtype,
+        ).to(reference.device)

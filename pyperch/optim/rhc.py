@@ -47,12 +47,12 @@ class RHC(RandomizedOptimizer):
         self.step_size = step_size
         self.restarts = restarts
         self.restart_interval = restart_interval
+        self._generator = self._make_generator(random_state)
+
+    def reset_counters(self) -> None:
+        """Reset counters and run-specific state without changing parameters."""
+        super().reset_counters()
         self.completed_restarts = 0
-
-        self._generator = torch.Generator()
-        if random_state is not None:
-            self._generator.manual_seed(random_state)
-
         self._initialized = False
         self._current_loss: float | None = None
         self._best_params: list[torch.Tensor] | None = None
@@ -112,12 +112,7 @@ class RHC(RandomizedOptimizer):
             for p in group["params"]:
                 if not p.requires_grad:
                     continue
-                noise = torch.randn(
-                    p.shape,
-                    generator=self._generator,
-                    device=p.device,
-                    dtype=p.dtype,
-                )
+                noise = self._randn_like(p)
                 p.add_(step_size * noise)
 
     @torch.no_grad()
@@ -131,12 +126,7 @@ class RHC(RandomizedOptimizer):
             return
 
         for p in self._parameters():
-            noise = torch.randn(
-                p.shape,
-                generator=self._generator,
-                device=p.device,
-                dtype=p.dtype,
-            )
+            noise = self._randn_like(p)
             p.copy_(noise)
 
         self.completed_restarts += 1
@@ -154,3 +144,5 @@ class RHC(RandomizedOptimizer):
         """Restore the best parameter values observed so far."""
         if self._best_params is not None:
             self._restore_params(self._best_params)
+            self._current_loss = self.best_loss
+            self._initialized = True

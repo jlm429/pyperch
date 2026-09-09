@@ -61,17 +61,18 @@ class SA(RandomizedOptimizer):
             "step_size": step_size,
         }
 
+        self._initial_temperature = temperature
         super().__init__(params, defaults)
 
         self.step_size = step_size
-        self.temperature = temperature
         self.min_temperature = min_temperature
         self.cooling = cooling
+        self._generator = self._make_generator(random_state)
 
-        self._generator = torch.Generator()
-        if random_state is not None:
-            self._generator.manual_seed(random_state)
-
+    def reset_counters(self) -> None:
+        """Reset counters and run-specific state without changing parameters."""
+        super().reset_counters()
+        self.temperature = self._initial_temperature
         self._initialized = False
         self._current_loss: float | None = None
         self._best_params: list[torch.Tensor] | None = None
@@ -119,15 +120,7 @@ class SA(RandomizedOptimizer):
         old_param = param.detach().clone()
 
         with torch.no_grad():
-            noise = (
-                torch.rand(
-                    param.shape,
-                    generator=self._generator,
-                    device=param.device,
-                    dtype=param.dtype,
-                )
-                - 0.5
-            )
+            noise = self._rand_like(param) - 0.5
 
             param.add_(self.step_size * noise)
 
@@ -189,3 +182,5 @@ class SA(RandomizedOptimizer):
         """Restore the best parameters observed so far."""
         if self._best_params is not None:
             self._restore_params(self._best_params)
+            self._current_loss = self.best_loss
+            self._initialized = True

@@ -144,6 +144,68 @@ def test_rhc_reset_counters():
     assert optimizer.best_loss is None
 
 
+def test_rhc_reset_counters_starts_fresh_run_and_restart_schedule():
+    parameter = nn.Parameter(torch.tensor([0.0]))
+    optimizer = RHC(
+        [parameter],
+        step_size=1.0,
+        restarts=1,
+        restart_interval=1,
+        random_state=7,
+    )
+
+    def closure():
+        return parameter.square().sum()
+
+    optimizer.step(closure)
+    optimizer.step(closure)
+    optimizer.step(closure)
+    assert optimizer.completed_restarts == 1
+
+    with torch.no_grad():
+        parameter.fill_(5)
+    optimizer.reset_counters()
+    fresh_loss = optimizer.step(closure)
+
+    assert fresh_loss.item() == 25
+    assert optimizer.best_loss == 25
+    assert optimizer.function_evals == 1
+    assert optimizer.proposed_steps == 0
+    assert optimizer.accepted_steps == 0
+    assert optimizer.rejected_steps == 0
+    assert optimizer.completed_restarts == 0
+
+    with torch.no_grad():
+        parameter.fill_(7)
+    optimizer.restore_best()
+
+    assert parameter.item() == 5
+
+
+def test_rhc_restore_best_synchronizes_continued_optimization():
+    parameter = nn.Parameter(torch.tensor([0.0]))
+    optimizer = RHC(
+        [parameter],
+        step_size=1.0,
+        restarts=1,
+        restart_interval=1,
+        random_state=1,
+    )
+
+    def closure():
+        return parameter.square().sum()
+
+    optimizer.step(closure)
+    optimizer.step(closure)
+    optimizer.step(closure)
+    optimizer.restore_best()
+    optimizer.step(closure)
+
+    assert parameter.item() == 0
+    assert optimizer.accepted_steps == 0
+    assert optimizer.rejected_steps == 2
+
+
 def test_rhc_accepted_boundary_proposal_restarts():
     optimizer, closure = make_scalar_optimizer(seed=10, restarts=1, restart_interval=1)
 

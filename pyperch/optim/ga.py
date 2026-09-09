@@ -56,11 +56,7 @@ class GA(RandomizedOptimizer):
         self.mutation_rate = mutation_rate
         self.step_size = step_size
 
-        self._generator = torch.Generator()
-        if random_state is None:
-            self._generator.seed()
-        else:
-            self._generator.manual_seed(random_state)
+        self._generator = self._make_generator(random_state)
 
     def reset_counters(self) -> None:
         """Reset counters and run-specific state without changing parameters."""
@@ -251,20 +247,6 @@ class GA(RandomizedOptimizer):
 
         return mutated
 
-    def _rand_like(self, reference: torch.Tensor) -> torch.Tensor:
-        return torch.rand(
-            reference.shape,
-            generator=self._generator,
-            dtype=reference.dtype,
-        ).to(reference.device)
-
-    def _randn_like(self, reference: torch.Tensor) -> torch.Tensor:
-        return torch.randn(
-            reference.shape,
-            generator=self._generator,
-            dtype=reference.dtype,
-        ).to(reference.device)
-
     @staticmethod
     def _clone_individual(
         individual: list[torch.Tensor],
@@ -276,3 +258,5 @@ class GA(RandomizedOptimizer):
         """Restore the best parameters observed so far."""
         if self._best_params is not None:
             self._restore_params(self._best_params)
+            self._current_loss = self.best_loss
+            self._initialized = True
