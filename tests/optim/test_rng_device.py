@@ -121,8 +121,49 @@ def test_rhc_and_sa_do_not_perturb_global_rng(optimizer_type, random_state):
 
 @pytest.mark.parametrize("optimizer_type", [RHC, SA])
 def test_rhc_and_sa_none_use_fresh_private_random_streams(optimizer_type):
-    losses_a, parameters_a = run_trajectory(optimizer_type, None)
-    losses_b, parameters_b = run_trajectory(optimizer_type, None)
+    def run_accepted_proposal():
+        parameter = nn.Parameter(torch.zeros(4))
+        optimizer = optimizer_type([parameter], step_size=0.25, random_state=None)
 
-    assert not torch.equal(losses_a, losses_b)
+        def closure():
+            return torch.zeros(())
+
+        optimizer.step(closure)
+        optimizer.step(closure)
+        assert optimizer.accepted_steps == 1
+        return parameter.detach().clone()
+
+    parameters_a = run_accepted_proposal()
+    parameters_b = run_accepted_proposal()
+
     assert not torch.equal(parameters_a, parameters_b)
+
+
+@pytest.mark.parametrize("optimizer_type", [RHC, SA])
+def test_rhc_and_sa_reset_counters_do_not_rewind_private_rng(optimizer_type):
+    reset_parameter = nn.Parameter(torch.zeros(4))
+    reference_parameter = nn.Parameter(torch.zeros(4))
+    reset_optimizer = optimizer_type([reset_parameter], step_size=0.25, random_state=42)
+    reference_optimizer = optimizer_type(
+        [reference_parameter], step_size=0.25, random_state=42
+    )
+
+    def reset_closure():
+        return torch.zeros(())
+
+    def reference_closure():
+        return torch.zeros(())
+
+    for optimizer, closure in (
+        (reset_optimizer, reset_closure),
+        (reference_optimizer, reference_closure),
+    ):
+        optimizer.step(closure)
+        optimizer.step(closure)
+
+    reset_optimizer.reset_counters()
+    reset_optimizer.step(reset_closure)
+    reset_optimizer.step(reset_closure)
+    reference_optimizer.step(reference_closure)
+
+    assert torch.equal(reset_parameter, reference_parameter)
