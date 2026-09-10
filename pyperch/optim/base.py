@@ -246,8 +246,7 @@ class RandomizedOptimizer(torch.optim.Optimizer):
                 raise ValueError("Unsupported PyPerch optimizer checkpoint version.")
             if checkpoint.get("optimizer") != type(self).__name__:
                 raise ValueError(
-                    "Cannot load a checkpoint created by a different PyPerch "
-                    "optimizer."
+                    "Cannot load a checkpoint created by a different PyPerch optimizer."
                 )
 
         for group in prepared["param_groups"]:

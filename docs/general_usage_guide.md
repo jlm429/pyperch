@@ -236,13 +236,14 @@ model.load_state_dict(checkpoint["model"])
 optimizer.load_state_dict(checkpoint["optimizer"])
 ```
 
-Create the receiving optimizer with the same parameter-group count, order, and
-parameter count before loading. Loading restores per-group settings and their
-defaults, counters, current and best losses, the best-model parameters, and the
-private random-generator position. It also restores RHC restart settings and
-progress, the SA temperature schedule and current temperature, or GA population
-size. Continued calls therefore follow the same stochastic trajectory as an
-uninterrupted compatible run.
+Create the receiving optimizer with the same number of parameter groups and the
+same number of parameters in each group, in the same order, before loading. Loading
+restores per-group settings and the defaults used by future groups, counters,
+current and best losses, the best-model parameters, and the private
+random-generator position. It also restores RHC restart settings and progress, the
+SA temperature schedule and current temperature, or GA population size. Continued
+calls therefore follow the same stochastic trajectory as an uninterrupted
+compatible run.
 
 Optimizer state dictionaries created by older PyPerch versions did not contain run
 or random-generator state. They remain loadable as fresh-run bookkeeping where the
