@@ -29,6 +29,9 @@ class GA(RandomizedOptimizer):
     Lower loss is assumed to be better.
     """
 
+    _group_options = frozenset({"mutation_rate", "step_size"})
+    _optimizer_level_options = frozenset({"random_state", "population_size"})
+
     def __init__(
         self,
         params,
@@ -45,7 +48,6 @@ class GA(RandomizedOptimizer):
             raise ValueError("step_size must be positive.")
 
         defaults = {
-            "population_size": population_size,
             "mutation_rate": mutation_rate,
             "step_size": step_size,
         }
@@ -53,8 +55,6 @@ class GA(RandomizedOptimizer):
         super().__init__(params, defaults)
 
         self.population_size = population_size
-        self.mutation_rate = mutation_rate
-        self.step_size = step_size
 
         self._generator = self._make_generator(random_state)
 
@@ -76,7 +76,7 @@ class GA(RandomizedOptimizer):
             self._initialized = True
             self._current_loss = loss
             self._update_best_loss(loss)
-            self._best_params = self._clone_params()
+            self._best_params = self._clone_all_params()
 
             return loss_tensor
 
@@ -112,7 +112,7 @@ class GA(RandomizedOptimizer):
 
             if self.best_loss is None or best_candidate_loss < self.best_loss:
                 self.best_loss = best_candidate_loss
-                self._best_params = self._clone_params()
+                self._best_params = self._clone_all_params()
 
             return result_template.detach().new_tensor(best_candidate_loss)
 
@@ -141,10 +141,13 @@ class GA(RandomizedOptimizer):
         for _ in range(self.population_size - 1):
             individual = []
 
-            for param in base_params:
+            for param, (_, group) in zip(
+                base_params,
+                self._parameters_with_groups(),
+            ):
                 noise = self._randn_like(param)
 
-                individual.append(param + self.step_size * noise)
+                individual.append(param + group["step_size"] * noise)
 
             population.append(individual)
 
@@ -232,15 +235,16 @@ class GA(RandomizedOptimizer):
         population: list[list[torch.Tensor]],
     ) -> list[list[torch.Tensor]]:
         mutated = []
+        parameter_groups = self._parameters_with_groups()
 
         for individual in population:
             new_individual = []
 
-            for param in individual:
-                mutation_mask = self._rand_like(param) < self.mutation_rate
+            for param, (_, group) in zip(individual, parameter_groups):
+                mutation_mask = self._rand_like(param) < group["mutation_rate"]
                 noise = self._randn_like(param)
 
-                new_param = param + mutation_mask * self.step_size * noise
+                new_param = param + mutation_mask * group["step_size"] * noise
                 new_individual.append(new_param)
 
             mutated.append(new_individual)
@@ -257,6 +261,51 @@ class GA(RandomizedOptimizer):
     def restore_best(self) -> None:
         """Restore the best parameters observed so far."""
         if self._best_params is not None:
-            self._restore_params(self._best_params)
+            self._restore_all_params(self._best_params)
             self._current_loss = self.best_loss
             self._initialized = True
+
+    def _validate_group_options(self, param_group) -> None:
+        if "mutation_rate" in param_group:
+            mutation_rate = param_group["mutation_rate"]
+            if mutation_rate < 0 or mutation_rate > 1:
+                raise ValueError(
+                    "mutation_rate must be in [0, 1] in every parameter group."
+                )
+        if "step_size" in param_group and param_group["step_size"] <= 0:
+            raise ValueError("step_size must be positive in every parameter group.")
+
+    def _algorithm_checkpoint_state(self) -> dict:
+        return {"population_size": self.population_size}
+
+    def _load_algorithm_checkpoint_state(self, state: dict) -> None:
+        population_size = state["population_size"]
+        if population_size < 2:
+            raise ValueError("Checkpoint population_size must be at least 2.")
+        self.population_size = population_size
+
+    def _migrate_legacy_param_groups(self, param_groups: list[dict]) -> dict | None:
+        population_sizes = [
+            group.pop("population_size")
+            for group in param_groups
+            if "population_size" in group
+        ]
+        if not population_sizes:
+            return None
+        if (
+            len(population_sizes) != len(param_groups)
+            or len(set(population_sizes)) != 1
+        ):
+            raise ValueError(
+                "Legacy GA state has conflicting per-group population_size values "
+                "and cannot be migrated."
+            )
+
+        population_size = population_sizes[0]
+        if population_size < 2:
+            raise ValueError("Legacy GA population_size must be at least 2.")
+        return {"population_size": population_size}
+
+    def _load_legacy_algorithm_state(self, state: dict | None) -> None:
+        if state is not None:
+            self.population_size = state["population_size"]
