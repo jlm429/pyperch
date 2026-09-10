@@ -158,6 +158,49 @@ GA evolves a population using selection, crossover, and mutation.
 
 ---
 
+# Parameter Groups and Joint Search Settings
+
+PyPerch accepts standard PyTorch parameter-group dictionaries. Group options apply
+to the tensors in that group, while settings that define the joint randomized
+search remain optimizer-level constructor arguments.
+
+| Optimizer | Per-parameter-group options | Optimizer-level options |
+| --- | --- | --- |
+| RHC | `step_size` | `restarts`, `restart_interval`, `random_state` |
+| SA | `step_size` | `temperature`, `min_temperature`, `cooling`, `random_state` |
+| GA | `step_size`, `mutation_rate` | `population_size`, `random_state` |
+
+For example, two RHC groups can use different proposal scales:
+
+```python
+optimizer = RHC(
+    [
+        {"params": model.features.parameters(), "step_size": 0.02},
+        {"params": model.classifier.parameters(), "step_size": 0.1},
+    ],
+    restarts=2,
+    restart_interval=50,
+    random_state=42,
+)
+```
+
+RHC proposes one joint-model move and applies each group's `step_size`. Its restart
+schedule and budget describe the whole model. SA selects one trainable parameter
+tensor from the joint model, applies that tensor's group `step_size`, and uses one
+shared temperature schedule. A GA individual spans all trainable parameters;
+initialization and mutation use each tensor's group `step_size` and `mutation_rate`,
+while population size, selection, and crossover operate on the joint population.
+
+Putting an optimizer-level option such as `population_size` or `temperature` in a
+parameter-group dictionary raises `ValueError` instead of accepting an ineffective
+setting. Effective group values are also validated when groups are constructed or
+added. Calling `add_param_group()` after a run has started preserves model values
+and the private random stream, but clears counters, cached losses, the best-model
+checkpoint, and algorithm lifecycle progress because the joint search space has
+changed. The next `step()` initializes a fresh run over all current groups.
+
+---
+
 # Optimizer Counters and State
 
 PyPerch optimizers expose a small set of counters and state values to help inspect optimizer behavior.
@@ -177,6 +220,34 @@ PyPerch optimizers expose a small set of counters and state values to help inspe
 RHC also exposes:
 
 - `completed_restarts`: number of restarts actually performed.
+
+## Saving and resuming
+
+Save both the model and optimizer state, just as with a standard PyTorch optimizer:
+
+```python
+torch.save(
+    {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
+    "checkpoint.pt",
+)
+
+checkpoint = torch.load("checkpoint.pt", weights_only=True)
+model.load_state_dict(checkpoint["model"])
+optimizer.load_state_dict(checkpoint["optimizer"])
+```
+
+Create the receiving optimizer with the same parameter-group count, order, and
+parameter count before loading. Loading restores per-group settings and their
+defaults, counters, current and best losses, the best-model parameters, and the
+private random-generator position. It also restores RHC restart settings and
+progress, the SA temperature schedule and current temperature, or GA population
+size. Continued calls therefore follow the same stochastic trajectory as an
+uninterrupted compatible run.
+
+Optimizer state dictionaries created by older PyPerch versions did not contain run
+or random-generator state. They remain loadable as fresh-run bookkeeping where the
+old group structure is compatible, but the unavailable stochastic trajectory cannot
+be reconstructed.
 
 ---
 # Examples

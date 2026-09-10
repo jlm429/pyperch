@@ -26,6 +26,11 @@ class RHC(RandomizedOptimizer):
     better. Gradients are not required.
     """
 
+    _group_options = frozenset({"step_size"})
+    _optimizer_level_options = frozenset(
+        {"random_state", "restarts", "restart_interval"}
+    )
+
     def __init__(
         self,
         params,
@@ -44,7 +49,6 @@ class RHC(RandomizedOptimizer):
         defaults = {"step_size": step_size}
         super().__init__(params, defaults)
 
-        self.step_size = step_size
         self.restarts = restarts
         self.restart_interval = restart_interval
         self._generator = self._make_generator(random_state)
@@ -137,12 +141,35 @@ class RHC(RandomizedOptimizer):
         """Save the current parameters when they improve the best loss."""
         if self.best_loss is None or loss <= self.best_loss:
             self.best_loss = loss
-            self._best_params = self._clone_params()
+            self._best_params = self._clone_all_params()
 
     @torch.no_grad()
     def restore_best(self) -> None:
         """Restore the best parameter values observed so far."""
         if self._best_params is not None:
-            self._restore_params(self._best_params)
+            self._restore_all_params(self._best_params)
             self._current_loss = self.best_loss
             self._initialized = True
+
+    def _validate_group_options(self, param_group) -> None:
+        if "step_size" in param_group and param_group["step_size"] <= 0:
+            raise ValueError("step_size must be positive in every parameter group.")
+
+    def _algorithm_checkpoint_state(self) -> dict:
+        return {
+            "restarts": self.restarts,
+            "restart_interval": self.restart_interval,
+            "completed_restarts": self.completed_restarts,
+        }
+
+    def _load_algorithm_checkpoint_state(self, state: dict) -> None:
+        restarts = state["restarts"]
+        restart_interval = state["restart_interval"]
+        if restarts < 0:
+            raise ValueError("Checkpoint restarts must be >= 0.")
+        if restart_interval is not None and restart_interval <= 0:
+            raise ValueError("Checkpoint restart_interval must be positive.")
+
+        self.restarts = restarts
+        self.restart_interval = restart_interval
+        self.completed_restarts = state["completed_restarts"]

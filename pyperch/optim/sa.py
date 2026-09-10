@@ -39,6 +39,11 @@ class SA(RandomizedOptimizer):
     Lower loss is assumed to be better.
     """
 
+    _group_options = frozenset({"step_size"})
+    _optimizer_level_options = frozenset(
+        {"random_state", "temperature", "min_temperature", "cooling"}
+    )
+
     def __init__(
         self,
         params,
@@ -64,7 +69,6 @@ class SA(RandomizedOptimizer):
         self._initial_temperature = temperature
         super().__init__(params, defaults)
 
-        self.step_size = step_size
         self.min_temperature = min_temperature
         self.cooling = cooling
         self._generator = self._make_generator(random_state)
@@ -91,11 +95,11 @@ class SA(RandomizedOptimizer):
             self._initialized = True
             self._current_loss = loss
             self._update_best_loss(loss)
-            self._best_params = self._clone_params()
+            self._best_params = self._clone_all_params()
 
             return loss_tensor
 
-        trainable = self._parameters()
+        trainable = self._parameters_with_groups()
 
         if not trainable:
             with torch.enable_grad():
@@ -115,14 +119,14 @@ class SA(RandomizedOptimizer):
             generator=self._generator,
         ).item()
 
-        param = trainable[param_index]
+        param, group = trainable[param_index]
 
         old_param = param.detach().clone()
 
         with torch.no_grad():
             noise = self._rand_like(param) - 0.5
 
-            param.add_(self.step_size * noise)
+            param.add_(group["step_size"] * noise)
 
         self.proposed_steps += 1
 
@@ -154,7 +158,7 @@ class SA(RandomizedOptimizer):
 
             if self.best_loss is None or candidate_loss < self.best_loss:
                 self.best_loss = candidate_loss
-                self._best_params = self._clone_params()
+                self._best_params = self._clone_all_params()
 
             result = candidate_loss_tensor
 
@@ -181,6 +185,35 @@ class SA(RandomizedOptimizer):
     def restore_best(self) -> None:
         """Restore the best parameters observed so far."""
         if self._best_params is not None:
-            self._restore_params(self._best_params)
+            self._restore_all_params(self._best_params)
             self._current_loss = self.best_loss
             self._initialized = True
+
+    def _validate_group_options(self, param_group) -> None:
+        if "step_size" in param_group and param_group["step_size"] <= 0:
+            raise ValueError("step_size must be positive in every parameter group.")
+
+    def _algorithm_checkpoint_state(self) -> dict:
+        return {
+            "initial_temperature": self._initial_temperature,
+            "temperature": self.temperature,
+            "min_temperature": self.min_temperature,
+            "cooling": self.cooling,
+        }
+
+    def _load_algorithm_checkpoint_state(self, state: dict) -> None:
+        initial_temperature = state["initial_temperature"]
+        temperature = state["temperature"]
+        min_temperature = state["min_temperature"]
+        cooling = state["cooling"]
+        if initial_temperature <= 0 or temperature <= 0:
+            raise ValueError("Checkpoint temperatures must be positive.")
+        if min_temperature <= 0:
+            raise ValueError("Checkpoint min_temperature must be positive.")
+        if cooling <= 0 or cooling > 1:
+            raise ValueError("Checkpoint cooling must be in the interval (0, 1].")
+
+        self._initial_temperature = initial_temperature
+        self.temperature = temperature
+        self.min_temperature = min_temperature
+        self.cooling = cooling
