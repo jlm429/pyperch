@@ -162,10 +162,6 @@ Parameters:
   sampling reproducible without reading or changing PyTorch's global random state.
   `None` creates a freshly seeded private stream.
 
-GA no longer accepts the former `step_size` argument. Set
-`initialization_step_size` and `mutation_step_size` explicitly when migrating older
-code.
-
 The first `step()` evaluates and retains the complete initial population. Later
 calls each evolve one generation from the retained population. The best half of the
 population, with a minimum of one elite, survives unchanged with its known loss.
