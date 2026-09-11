@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Persist GA populations and known elite losses across generations, count GA steps
+  in generation units, and preserve population state across checkpoints.
+- Replace GA `step_size` with separate `initialization_step_size` and
+  `mutation_step_size` settings, add RHC `restart_scale`, and tighten SA temperature
+  validation.
 - Add `pyperch.plotting` preparation and rendering APIs for learning, training,
   and validation curves. Renderers require caller-owned Matplotlib Axes and return
   the same Axes without managing figures or starting training.

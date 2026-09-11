@@ -167,7 +167,7 @@ calls each evolve one generation from the retained population. The best half of 
 population, with a minimum of one elite, survives unchanged with its known loss.
 Uniform crossover and mutation create the remaining children, and only those
 fitness-unknown children call the closure. Stable loss and prior-position ordering
-makes tied rankings deterministic. The model parameters follow the best current
+make tied rankings deterministic. The model parameters follow the best current
 individual, while `restore_best()` restores the global best observed across all
 generations.
 
@@ -232,8 +232,9 @@ PyPerch optimizers expose a small set of counters and state values to help inspe
 - `rejected_steps`: number of proposals that did not improve or were rejected by the
   algorithm.
 - `best_loss`: best loss observed by the optimizer.
-- `restore_best()`: restores the best parameter values observed so far and allows
-  optimization to continue from that restored state.
+- `restore_best()`: restores the best parameter values observed so far without
+  rewinding counters, schedules, the retained GA population, or the private random
+  stream. Later calls continue the optimizer's current lifecycle.
 - `reset_counters()`: clears counters and starts fresh run bookkeeping from the
   current model parameters without changing those parameters or rewinding the private
   random stream. RHC restart progress, SA temperature, and the GA population also
