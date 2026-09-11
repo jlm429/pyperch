@@ -40,7 +40,7 @@ implementation before freezing it.
 
 Record these separately rather than treating them as interchangeable:
 
-- Optimizer iterations are explicit `step()` calls. For RHC and SA, the first call
+- Optimizer step calls are explicit `step()` invocations. For RHC and SA, the first call
   initializes the loss and later calls propose moves.
 - GA population initialization is not a generation. Each later `step()` evolves one
   persistent generation, and cached elite fitness avoids some objective calls.
@@ -59,9 +59,9 @@ synchronization, or other excluded costs explicitly.
 
 1. Write the fixed protocol and deterministic per-run or per-trial seed rule before
    the first comparison.
-2. Keep runners, studies, logs, and results outside the repository unless tracked
-   artifacts are requested. Do not change the implementation after measurements
-   begin.
+2. Keep runners, studies, logs, and results in a task-authorized untracked location
+   unless tracked artifacts are requested. Do not change the implementation after
+   measurements begin.
 3. Record per-run results and all completed, failed, and pruned trials. Compare only
    protocols that differ by the declared factor.
 4. Present variation across seeds or splits and label exploratory evidence. Do not
