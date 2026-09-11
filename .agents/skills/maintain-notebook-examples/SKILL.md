@@ -26,8 +26,9 @@ validation commands.
 - Use current API names and precise terminology. Distinguish optimizer calls, RHC or
   SA proposals, GA generations, objective evaluations, monitoring evaluations,
   validation, and test evaluation.
-- Demonstrate `restore_best()` before reporting an optimizer's best result or before
-  final evaluation when current parameters may not be the global best.
+- Demonstrate `restore_best()` before a reported result, comparison, or final
+  evaluation that claims the optimizer's best-found state. Preserve current
+  parameters when the intended claim is terminal-state performance.
 - Use relevant available devices for executable coverage and state unavailable-device
   coverage explicitly. Treat accelerator runs as compatibility evidence unless they
   are designed as performance benchmarks.
@@ -35,9 +36,9 @@ validation commands.
   training sample counts, training curves label actual iteration, generation, or
   evaluation units, and model-complexity validation curves vary a real capacity
   hyperparameter.
-- Keep Optuna studies and trials visible. Refit the selected best configuration,
-  restore its best parameters, and evaluate that model. Preserve clear optional
-  dependency behavior.
+- Keep Optuna studies and trials visible. Refit the selected best configuration and,
+  when its evaluation claims the optimizer's best-found state, restore its best
+  parameters before evaluating it. Preserve clear optional dependency behavior.
 
 ## Workflow
 
