@@ -12,6 +12,7 @@ Substantial refactoring and redesign by John Mansfield (2026).
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 
 import torch
@@ -26,7 +27,7 @@ class RHC(RandomizedOptimizer):
     better. Gradients are not required.
     """
 
-    _group_options = frozenset({"step_size"})
+    _group_options = frozenset({"restart_scale", "step_size"})
     _optimizer_level_options = frozenset(
         {"random_state", "restarts", "restart_interval"}
     )
@@ -37,6 +38,7 @@ class RHC(RandomizedOptimizer):
         step_size: float = 0.1,
         restarts: int = 0,
         restart_interval: int | None = None,
+        restart_scale: float = 1.0,
         random_state: int | None = None,
     ):
         if step_size <= 0:
@@ -45,8 +47,10 @@ class RHC(RandomizedOptimizer):
             raise ValueError("restarts must be >= 0.")
         if restart_interval is not None and restart_interval <= 0:
             raise ValueError("restart_interval must be positive when provided.")
+        if not math.isfinite(restart_scale) or restart_scale <= 0:
+            raise ValueError("restart_scale must be finite and positive.")
 
-        defaults = {"step_size": step_size}
+        defaults = {"restart_scale": restart_scale, "step_size": step_size}
         super().__init__(params, defaults)
 
         self.restarts = restarts
@@ -129,9 +133,13 @@ class RHC(RandomizedOptimizer):
         if self.proposed_steps % self.restart_interval != 0:
             return
 
-        for p in self._parameters():
-            noise = self._randn_like(p)
-            p.copy_(noise)
+        for group in self.param_groups:
+            restart_scale = group["restart_scale"]
+            for p in group["params"]:
+                if not p.requires_grad:
+                    continue
+                noise = self._randn_like(p)
+                p.copy_(restart_scale * noise)
 
         self.completed_restarts += 1
         self._current_loss = None
@@ -154,6 +162,13 @@ class RHC(RandomizedOptimizer):
     def _validate_group_options(self, param_group) -> None:
         if "step_size" in param_group and param_group["step_size"] <= 0:
             raise ValueError("step_size must be positive in every parameter group.")
+        if "restart_scale" in param_group:
+            restart_scale = param_group["restart_scale"]
+            if not math.isfinite(restart_scale) or restart_scale <= 0:
+                raise ValueError(
+                    "restart_scale must be finite and positive in every parameter "
+                    "group."
+                )
 
     def _algorithm_checkpoint_state(self) -> dict:
         return {

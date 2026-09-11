@@ -67,11 +67,15 @@ def make_group_optimizer(optimizer_type, first, second, *, resumed=False):
 
     groups[0]["mutation_rate"] = 0.0 if resumed else 0.2
     groups[1]["mutation_rate"] = 0.0 if resumed else 0.9
+    for group in groups:
+        group["initialization_step_size"] = group.pop("step_size")
+        group["mutation_step_size"] = group["initialization_step_size"]
     return GA(
         groups,
         population_size=4 if resumed else 6,
         mutation_rate=0.0 if resumed else 0.4,
-        step_size=0.9 if resumed else 0.12,
+        initialization_step_size=0.9 if resumed else 0.12,
+        mutation_step_size=0.8 if resumed else 0.11,
         random_state=999 if resumed else 17,
     )
 
@@ -103,15 +107,21 @@ def test_rhc_and_sa_apply_distinct_step_size_per_parameter_group(optimizer_type)
     assert torch.allclose(grouped_second, uniform_second * 7)
 
 
-def run_ga_group_trajectory(*, second_step_size, second_mutation_rate, steps=2):
+def run_ga_group_trajectory(*, second_scale, second_mutation_rate, steps=2):
     first = nn.Parameter(torch.zeros(4))
     second = nn.Parameter(torch.zeros(4))
     optimizer = GA(
         [
-            {"params": [first], "step_size": 0.1, "mutation_rate": 1.0},
+            {
+                "params": [first],
+                "initialization_step_size": 0.1,
+                "mutation_step_size": 0.1,
+                "mutation_rate": 1.0,
+            },
             {
                 "params": [second],
-                "step_size": second_step_size,
+                "initialization_step_size": second_scale,
+                "mutation_step_size": second_scale,
                 "mutation_rate": second_mutation_rate,
             },
         ],
@@ -125,13 +135,13 @@ def run_ga_group_trajectory(*, second_step_size, second_mutation_rate, steps=2):
     return first.detach().clone(), second.detach().clone()
 
 
-def test_ga_applies_distinct_step_size_per_parameter_group():
+def test_ga_applies_distinct_initialization_and_mutation_scales_per_group():
     uniform_first, uniform_second = run_ga_group_trajectory(
-        second_step_size=0.1,
+        second_scale=0.1,
         second_mutation_rate=1.0,
     )
     grouped_first, grouped_second = run_ga_group_trajectory(
-        second_step_size=0.7,
+        second_scale=0.7,
         second_mutation_rate=1.0,
     )
 
@@ -141,12 +151,12 @@ def test_ga_applies_distinct_step_size_per_parameter_group():
 
 def test_ga_applies_distinct_mutation_rate_per_parameter_group():
     unmutated_first, unmutated_second = run_ga_group_trajectory(
-        second_step_size=0.3,
+        second_scale=0.3,
         second_mutation_rate=0.0,
         steps=6,
     )
     mutated_first, mutated_second = run_ga_group_trajectory(
-        second_step_size=0.3,
+        second_scale=0.3,
         second_mutation_rate=1.0,
         steps=6,
     )
@@ -200,7 +210,8 @@ def test_options_from_other_algorithms_are_rejected_in_parameter_groups(
     [
         (RHC, {"step_size": 0.0}),
         (SA, {"step_size": -0.1}),
-        (GA, {"step_size": 0.0}),
+        (GA, {"initialization_step_size": 0.0}),
+        (GA, {"mutation_step_size": 0.0}),
         (GA, {"mutation_rate": 1.1}),
     ],
 )
@@ -232,6 +243,9 @@ def test_adding_a_parameter_group_starts_fresh_joint_run_bookkeeping(
 
     new_group = {"params": [added], "step_size": 0.6}
     if optimizer_type is GA:
+        new_group.pop("step_size")
+        new_group["initialization_step_size"] = 0.6
+        new_group["mutation_step_size"] = 0.7
         new_group["mutation_rate"] = 0.8
     optimizer.add_param_group(new_group)
 
@@ -248,7 +262,8 @@ def test_adding_a_parameter_group_starts_fresh_joint_run_bookkeeping(
     optimizer.step(
         lambda: first.square().sum() + second.square().sum() + added.square().sum()
     )
-    assert optimizer.function_evals == 1
+    expected_evals = optimizer.population_size if optimizer_type is GA else 1
+    assert optimizer.function_evals == expected_evals
     assert optimizer.proposed_steps == 0
 
 
@@ -312,19 +327,25 @@ def test_checkpoint_round_trip_continues_identically(
     assert resumed.accepted_steps == uninterrupted.accepted_steps
     assert resumed.rejected_steps == uninterrupted.rejected_steps
     assert resumed.best_loss == uninterrupted.best_loss
-    assert resumed.param_groups[0]["step_size"] == 0.05
-    assert resumed.param_groups[1]["step_size"] == 0.3
     if optimizer_type is RHC:
+        assert resumed.param_groups[0]["step_size"] == 0.05
+        assert resumed.param_groups[1]["step_size"] == 0.3
         assert resumed.restarts == uninterrupted.restarts == 2
         assert resumed.restart_interval == uninterrupted.restart_interval == 2
         assert resumed.completed_restarts == uninterrupted.completed_restarts
     elif optimizer_type is SA:
+        assert resumed.param_groups[0]["step_size"] == 0.05
+        assert resumed.param_groups[1]["step_size"] == 0.3
         assert resumed._initial_temperature == uninterrupted._initial_temperature == 4.0
         assert resumed.temperature == uninterrupted.temperature
         assert resumed.min_temperature == uninterrupted.min_temperature == 0.25
         assert resumed.cooling == uninterrupted.cooling == 0.5
     else:
         assert resumed.population_size == uninterrupted.population_size == 6
+        assert resumed.param_groups[0]["initialization_step_size"] == 0.05
+        assert resumed.param_groups[1]["initialization_step_size"] == 0.3
+        assert resumed.param_groups[0]["mutation_step_size"] == 0.05
+        assert resumed.param_groups[1]["mutation_step_size"] == 0.3
         assert resumed.param_groups[0]["mutation_rate"] == 0.2
         assert resumed.param_groups[1]["mutation_rate"] == 0.9
 
@@ -334,11 +355,16 @@ def test_checkpoint_round_trip_continues_identically(
     resumed.add_param_group(
         {"params": [nn.Parameter(torch.zeros(1, device=device, dtype=dtype))]}
     )
-    assert uninterrupted.param_groups[-1]["step_size"] == 0.12
-    assert resumed.param_groups[-1]["step_size"] == 0.12
     if optimizer_type is GA:
+        assert uninterrupted.param_groups[-1]["initialization_step_size"] == 0.12
+        assert resumed.param_groups[-1]["initialization_step_size"] == 0.12
+        assert uninterrupted.param_groups[-1]["mutation_step_size"] == 0.11
+        assert resumed.param_groups[-1]["mutation_step_size"] == 0.11
         assert uninterrupted.param_groups[-1]["mutation_rate"] == 0.4
         assert resumed.param_groups[-1]["mutation_rate"] == 0.4
+    else:
+        assert uninterrupted.param_groups[-1]["step_size"] == 0.12
+        assert resumed.param_groups[-1]["step_size"] == 0.12
 
 
 def test_ga_loads_legacy_uniform_population_size_as_optimizer_level_state():

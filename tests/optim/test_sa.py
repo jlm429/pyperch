@@ -1,3 +1,4 @@
+import pytest
 import torch
 from torch import nn
 
@@ -182,3 +183,26 @@ def test_sa_restore_best_synchronizes_continued_optimization():
     assert parameter.item() == 0
     assert optimizer.accepted_steps == 1
     assert optimizer.rejected_steps == 1
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        {"temperature": 0.0},
+        {"temperature": float("inf")},
+        {"temperature": float("nan")},
+        {"min_temperature": 0.0},
+        {"min_temperature": float("inf")},
+        {"min_temperature": float("nan")},
+        {"temperature": 1.0, "min_temperature": 1.1},
+        {"cooling": 0.0},
+        {"cooling": 1.1},
+        {"cooling": float("inf")},
+        {"cooling": float("nan")},
+    ],
+)
+def test_sa_rejects_invalid_temperature_configuration(options):
+    parameter = nn.Parameter(torch.zeros(1))
+
+    with pytest.raises(ValueError):
+        SA([parameter], **options)
