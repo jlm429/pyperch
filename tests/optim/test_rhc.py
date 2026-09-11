@@ -1,3 +1,6 @@
+import io
+
+import pytest
 import torch
 from torch import nn
 
@@ -323,3 +326,105 @@ def test_rhc_disabled_restart_configurations_remain_disabled():
 
     _assert_restarts_disabled(no_interval_optimizer)
     _assert_restarts_disabled(no_budget_optimizer)
+
+
+def test_rhc_restart_scale_controls_reset_magnitude_and_preserves_frozen_params():
+    def run(scale):
+        trainable = nn.Parameter(torch.zeros(4))
+        frozen = nn.Parameter(torch.full((4,), 7.0), requires_grad=False)
+        optimizer = RHC(
+            [trainable, frozen],
+            step_size=0.1,
+            restarts=1,
+            restart_interval=1,
+            restart_scale=scale,
+            random_state=19,
+        )
+        optimizer.step(lambda: torch.zeros(()))
+        optimizer.step(lambda: torch.zeros(()))
+        return trainable.detach().clone(), frozen.detach().clone()
+
+    unit_trainable, unit_frozen = run(1.0)
+    scaled_trainable, scaled_frozen = run(0.25)
+
+    assert torch.allclose(scaled_trainable, unit_trainable * 0.25)
+    assert torch.equal(unit_frozen, torch.full((4,), 7.0))
+    assert torch.equal(scaled_frozen, unit_frozen)
+
+
+def test_rhc_restart_scale_supports_parameter_groups():
+    def run(second_scale):
+        first = nn.Parameter(torch.zeros(3))
+        second = nn.Parameter(torch.zeros(3))
+        optimizer = RHC(
+            [
+                {"params": [first], "restart_scale": 0.2},
+                {"params": [second], "restart_scale": second_scale},
+            ],
+            step_size=0.1,
+            restarts=1,
+            restart_interval=1,
+            random_state=29,
+        )
+        optimizer.step(lambda: torch.zeros(()))
+        optimizer.step(lambda: torch.zeros(()))
+        return first.detach().clone(), second.detach().clone()
+
+    first_small, second_small = run(0.2)
+    first_large, second_large = run(0.8)
+
+    assert torch.equal(first_large, first_small)
+    assert torch.allclose(second_large, second_small * 4)
+
+
+@pytest.mark.parametrize("restart_scale", [0.0, -1.0, float("inf"), float("nan")])
+def test_rhc_rejects_invalid_restart_scale(restart_scale):
+    parameter = nn.Parameter(torch.zeros(1))
+
+    with pytest.raises(ValueError, match="restart_scale"):
+        RHC([parameter], restart_scale=restart_scale)
+
+
+def test_rhc_checkpoint_continues_across_restart_boundary():
+    parameter = nn.Parameter(torch.zeros(2))
+    optimizer = RHC(
+        [parameter],
+        step_size=0.2,
+        restarts=2,
+        restart_interval=2,
+        restart_scale=0.4,
+        random_state=23,
+    )
+
+    def closure():
+        return parameter.square().sum()
+
+    optimizer.step(closure)
+    optimizer.step(closure)
+
+    serialized = io.BytesIO()
+    torch.save(
+        {"parameter": parameter, "optimizer": optimizer.state_dict()},
+        serialized,
+    )
+    serialized.seek(0)
+    checkpoint = torch.load(serialized, weights_only=True)
+
+    resumed_parameter = nn.Parameter(checkpoint["parameter"].detach().clone())
+    resumed = RHC([resumed_parameter], restart_scale=1.0, random_state=999)
+    resumed.load_state_dict(checkpoint["optimizer"])
+
+    for _ in range(5):
+        loss = optimizer.step(closure)
+        resumed_loss = resumed.step(lambda: resumed_parameter.square().sum())
+        assert torch.equal(loss, resumed_loss)
+        assert torch.equal(parameter, resumed_parameter)
+
+    assert optimizer.completed_restarts == resumed.completed_restarts == 2
+    assert optimizer.proposed_steps == resumed.proposed_steps == 4
+    assert optimizer.accepted_steps == resumed.accepted_steps
+    assert optimizer.rejected_steps == resumed.rejected_steps
+    assert resumed.param_groups[0]["restart_scale"] == 0.4
+    optimizer.restore_best()
+    resumed.restore_best()
+    assert torch.equal(parameter, resumed_parameter)

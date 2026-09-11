@@ -1,3 +1,5 @@
+import io
+
 import pytest
 import torch
 from torch import nn
@@ -23,7 +25,8 @@ def run_ga_trajectory(random_state, unrelated_global_draws=0):
         [parameter],
         population_size=6,
         mutation_rate=1.0,
-        step_size=0.25,
+        initialization_step_size=0.25,
+        mutation_step_size=0.25,
         random_state=random_state,
     )
 
@@ -59,7 +62,8 @@ def test_ga_classification_runs_and_tracks_counters():
         model.parameters(),
         population_size=8,
         mutation_rate=0.1,
-        step_size=0.05,
+        initialization_step_size=0.05,
+        mutation_step_size=0.05,
     )
 
     def closure():
@@ -78,6 +82,9 @@ def test_ga_classification_runs_and_tracks_counters():
     assert optimizer.proposed_steps > 0
     assert optimizer.accepted_steps > 0
     assert optimizer.rejected_steps >= 0
+    assert (
+        optimizer.accepted_steps + optimizer.rejected_steps == optimizer.proposed_steps
+    )
     assert optimizer.best_loss is not None
     assert optimizer.best_loss <= initial_loss
 
@@ -93,7 +100,8 @@ def test_ga_regression_runs_and_tracks_best_loss():
         model.parameters(),
         population_size=8,
         mutation_rate=0.1,
-        step_size=0.05,
+        initialization_step_size=0.05,
+        mutation_step_size=0.05,
     )
 
     def closure():
@@ -126,7 +134,8 @@ def test_ga_respects_frozen_parameters():
         model.parameters(),
         population_size=8,
         mutation_rate=0.1,
-        step_size=0.05,
+        initialization_step_size=0.05,
+        mutation_step_size=0.05,
     )
 
     def closure():
@@ -161,8 +170,8 @@ def test_ga_preserves_loss_dtype_and_device_after_initialization(
         nonlocal evaluations
         evaluations += 1
         loss = parameter.square().sum()
-        if not candidate_is_accepted and evaluations > 1:
-            loss = loss + 1
+        if evaluations > optimizer.population_size:
+            loss = loss - 1 if candidate_is_accepted else loss + 1
         return loss
 
     initial_loss = optimizer.step(closure)
@@ -191,7 +200,8 @@ def test_ga_reset_counters_starts_fresh_best_state():
         [parameter],
         population_size=2,
         mutation_rate=0.0,
-        step_size=0.01,
+        initialization_step_size=0.01,
+        mutation_step_size=0.01,
         random_state=42,
     )
 
@@ -207,7 +217,7 @@ def test_ga_reset_counters_starts_fresh_best_state():
 
     assert fresh_loss.item() == 25
     assert optimizer.best_loss == 25
-    assert optimizer.function_evals == 1
+    assert optimizer.function_evals == 2
     assert optimizer.proposed_steps == 0
     assert optimizer.accepted_steps == 0
     assert optimizer.rejected_steps == 0
@@ -251,3 +261,178 @@ def test_ga_none_uses_a_fresh_private_random_stream():
 
     assert not torch.equal(losses_a, losses_b)
     assert not torch.equal(parameters_a, parameters_b)
+
+
+def checkpoint_population(optimizer):
+    state = optimizer.state_dict()["state"]["_pyperch"]["algorithm"]
+    return state["population"], state["population_losses"]
+
+
+def test_ga_persists_elites_and_reuses_their_fitness_for_three_generations():
+    parameter = nn.Parameter(torch.tensor([2.0, -1.0]))
+    optimizer = GA(
+        [parameter],
+        population_size=6,
+        mutation_rate=1.0,
+        initialization_step_size=0.4,
+        mutation_step_size=0.2,
+        random_state=8,
+    )
+    evaluations = 0
+
+    def closure():
+        nonlocal evaluations
+        evaluations += 1
+        return parameter.square().sum()
+
+    optimizer.step(closure)
+    assert evaluations == 6
+    previous_best = optimizer.best_loss
+
+    for generation in range(1, 4):
+        population_before, losses_before = checkpoint_population(optimizer)
+        elite_index = min(range(len(losses_before)), key=losses_before.__getitem__)
+        elite = [value.clone() for value in population_before[elite_index]]
+        elite_loss = losses_before[elite_index]
+
+        optimizer.step(closure)
+        population_after, losses_after = checkpoint_population(optimizer)
+
+        assert any(
+            loss == elite_loss
+            and all(torch.equal(left, right) for left, right in zip(individual, elite))
+            for individual, loss in zip(population_after, losses_after)
+        )
+        assert evaluations == 6 + generation * 3
+        assert optimizer.function_evals == evaluations
+        assert optimizer.proposed_steps == generation
+        assert optimizer.accepted_steps + optimizer.rejected_steps == generation
+        assert optimizer.best_loss <= previous_best
+        previous_best = optimizer.best_loss
+
+
+def test_ga_checkpoint_round_trip_preserves_population_and_fitness():
+    parameter = nn.Parameter(torch.tensor([1.0, -2.0]))
+    optimizer = GA(
+        [parameter],
+        population_size=6,
+        mutation_rate=0.5,
+        initialization_step_size=0.4,
+        mutation_step_size=0.2,
+        random_state=31,
+    )
+    for _ in range(4):
+        optimizer.step(lambda: parameter.square().sum())
+
+    population_before, losses_before = checkpoint_population(optimizer)
+    serialized = io.BytesIO()
+    torch.save(
+        {"parameter": parameter, "optimizer": optimizer.state_dict()},
+        serialized,
+    )
+    serialized.seek(0)
+    checkpoint = torch.load(serialized, weights_only=True)
+
+    resumed_parameter = nn.Parameter(checkpoint["parameter"].detach().clone())
+    resumed = GA([resumed_parameter], population_size=2, random_state=999)
+    resumed.load_state_dict(checkpoint["optimizer"])
+    population_after, losses_after = checkpoint_population(resumed)
+
+    assert losses_after == losses_before
+    assert len(population_after) == len(population_before) == 6
+    for individual_after, individual_before in zip(
+        population_after,
+        population_before,
+    ):
+        assert all(
+            torch.equal(value_after, value_before)
+            for value_after, value_before in zip(
+                individual_after,
+                individual_before,
+            )
+        )
+
+    loss = optimizer.step(lambda: parameter.square().sum())
+    resumed_loss = resumed.step(lambda: resumed_parameter.square().sum())
+    assert torch.equal(resumed_loss, loss)
+    assert torch.equal(resumed_parameter, parameter)
+    assert resumed.function_evals == optimizer.function_evals
+    assert resumed.proposed_steps == optimizer.proposed_steps
+
+
+def test_ga_initialization_and_mutation_controls_have_independent_magnitudes():
+    def initialize(scale):
+        parameter = nn.Parameter(torch.zeros(3))
+        optimizer = GA(
+            [parameter],
+            population_size=4,
+            mutation_rate=1.0,
+            initialization_step_size=scale,
+            mutation_step_size=0.1,
+            random_state=5,
+        )
+        optimizer.step(lambda: parameter.square().sum())
+        population, _ = checkpoint_population(optimizer)
+        return population
+
+    small = initialize(0.2)
+    large = initialize(0.6)
+    for small_individual, large_individual in zip(small[1:], large[1:]):
+        assert torch.allclose(large_individual[0], small_individual[0] * 3)
+
+    def mutate(scale):
+        parameter = nn.Parameter(torch.zeros(1))
+        optimizer = GA(
+            [parameter],
+            population_size=2,
+            mutation_rate=1.0,
+            initialization_step_size=0.5,
+            mutation_step_size=scale,
+            random_state=17,
+        )
+        optimizer.step(lambda: parameter.square().sum())
+        initial_population, initial_losses = checkpoint_population(optimizer)
+        elite_index = min(range(len(initial_losses)), key=initial_losses.__getitem__)
+        elite = initial_population[elite_index][0]
+        optimizer.step(lambda: parameter.square().sum())
+        population, _ = checkpoint_population(optimizer)
+        child = next(
+            individual[0]
+            for individual in population
+            if not torch.equal(individual[0], elite)
+        )
+        return elite, child
+
+    small_parent, small_child = mutate(0.1)
+    large_parent, large_child = mutate(0.3)
+    assert torch.equal(small_parent, large_parent)
+    assert torch.allclose(large_child - large_parent, (small_child - small_parent) * 3)
+
+
+def test_ga_restore_best_after_multiple_generations():
+    parameter = nn.Parameter(torch.tensor([3.0, -2.0]))
+    optimizer = GA(
+        [parameter],
+        population_size=6,
+        mutation_rate=1.0,
+        initialization_step_size=0.5,
+        mutation_step_size=0.25,
+        random_state=12,
+    )
+    for _ in range(5):
+        optimizer.step(lambda: parameter.square().sum())
+
+    best_loss = optimizer.best_loss
+    with torch.no_grad():
+        parameter.fill_(99)
+    optimizer.restore_best()
+
+    assert parameter.square().sum().item() == pytest.approx(best_loss)
+    assert optimizer._current_loss == best_loss
+
+
+def test_ga_old_step_size_argument_is_not_accepted():
+    parameter = nn.Parameter(torch.zeros(1))
+
+    with pytest.raises(TypeError, match="step_size"):
+        GA([parameter], step_size=0.1)

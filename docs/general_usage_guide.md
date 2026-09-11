@@ -81,6 +81,7 @@ optimizer = RHC(
     step_size=0.1,
     restarts=0,
     restart_interval=None,
+    restart_scale=1.0,
     random_state=42,
 )
 ```
@@ -92,13 +93,16 @@ Parameters:
 - `restart_interval`: number of proposed steps between restarts, regardless of whether
   the proposal at the interval boundary is accepted or rejected. Use `None` to
   disable.
+- `restart_scale`: finite, positive standard deviation of the zero-centered Gaussian
+  parameter reset. It defaults to `1.0` and can be overridden per parameter group.
 - `random_state`: seed for RHC's private random stream. An integer makes proposal
   sampling reproducible without reading or changing PyTorch's global random state.
   `None` creates a freshly seeded private stream.
 
 RHC accepts candidate moves only when they do not increase the loss.
 After a restart, the next call evaluates the randomized parameters without counting
-another proposed step.
+another proposed step. Restarts occur at exact multiples of `restart_interval` until
+the `restarts` budget is exhausted. They do not discard the global best checkpoint.
 
 ---
 
@@ -120,9 +124,10 @@ optimizer = SA(
 Parameters:
 
 - `step_size`: scale of the random parameter perturbation.
-- `temperature`: initial annealing temperature.
-- `min_temperature`: lower bound for the temperature.
-- `cooling`: multiplicative cooling rate applied after each step.
+- `temperature`: finite, positive initial annealing temperature.
+- `min_temperature`: finite, positive lower bound no greater than `temperature`.
+- `cooling`: finite multiplicative cooling rate in the interval `(0, 1]`, applied
+  after each proposal.
 - `random_state`: seed for SA's private random stream. An integer makes proposal and
   acceptance sampling reproducible without reading or changing PyTorch's global
   random state. `None` creates a freshly seeded private stream.
@@ -140,7 +145,8 @@ optimizer = GA(
     model.parameters(),
     population_size=50,
     mutation_rate=0.1,
-    step_size=0.1,
+    initialization_step_size=0.1,
+    mutation_step_size=0.1,
     random_state=42,
 )
 ```
@@ -149,12 +155,21 @@ Parameters:
 
 - `population_size`: number of candidate solutions per generation.
 - `mutation_rate`: probability that each parameter value is mutated.
-- `step_size`: scale of random initialization and mutation noise.
+- `initialization_step_size`: scale of the Gaussian noise used once to initialize
+  the population around the caller's model parameters.
+- `mutation_step_size`: scale of Gaussian mutation noise applied to children.
 - `random_state`: seed for GA's private random stream. An integer makes population
   sampling reproducible without reading or changing PyTorch's global random state.
   `None` creates a freshly seeded private stream.
 
-GA evolves a population using selection, crossover, and mutation.
+The first `step()` evaluates and retains the complete initial population. Later
+calls each evolve one generation from the retained population. The best half of the
+population, with a minimum of one elite, survives unchanged with its known loss.
+Uniform crossover and mutation create the remaining children, and only those
+fitness-unknown children call the closure. Stable loss and prior-position ordering
+make tied rankings deterministic. The model parameters follow the best current
+individual, while `restore_best()` restores the global best observed across all
+generations.
 
 ---
 
@@ -166,9 +181,9 @@ search remain optimizer-level constructor arguments.
 
 | Optimizer | Per-parameter-group options | Optimizer-level options |
 | --- | --- | --- |
-| RHC | `step_size` | `restarts`, `restart_interval`, `random_state` |
+| RHC | `step_size`, `restart_scale` | `restarts`, `restart_interval`, `random_state` |
 | SA | `step_size` | `temperature`, `min_temperature`, `cooling`, `random_state` |
-| GA | `step_size`, `mutation_rate` | `population_size`, `random_state` |
+| GA | `initialization_step_size`, `mutation_step_size`, `mutation_rate` | `population_size`, `random_state` |
 
 For example, two RHC groups can use different proposal scales:
 
@@ -176,7 +191,11 @@ For example, two RHC groups can use different proposal scales:
 optimizer = RHC(
     [
         {"params": model.features.parameters(), "step_size": 0.02},
-        {"params": model.classifier.parameters(), "step_size": 0.1},
+        {
+            "params": model.classifier.parameters(),
+            "step_size": 0.1,
+            "restart_scale": 0.5,
+        },
     ],
     restarts=2,
     restart_interval=50,
@@ -184,11 +203,12 @@ optimizer = RHC(
 )
 ```
 
-RHC proposes one joint-model move and applies each group's `step_size`. Its restart
-schedule and budget describe the whole model. SA selects one trainable parameter
-tensor from the joint model, applies that tensor's group `step_size`, and uses one
-shared temperature schedule. A GA individual spans all trainable parameters;
-initialization and mutation use each tensor's group `step_size` and `mutation_rate`,
+RHC proposes one joint-model move and applies each group's `step_size`. A scheduled
+restart applies each group's `restart_scale`; its schedule and budget still describe
+the whole model. SA selects one trainable parameter tensor from the joint model,
+applies that tensor's group `step_size`, and uses one shared temperature schedule. A
+GA individual spans all trainable parameters; initialization and mutation use each
+tensor's group `initialization_step_size`, `mutation_step_size`, and `mutation_rate`,
 while population size, selection, and crossover operate on the joint population.
 
 Putting an optimizer-level option such as `population_size` or `temperature` in a
@@ -206,16 +226,28 @@ changed. The next `step()` initializes a fresh run over all current groups.
 PyPerch optimizers expose a small set of counters and state values to help inspect optimizer behavior.
 
 - `function_evals`: number of objective/loss evaluations.
-- `proposed_steps`: number of candidate updates proposed.
-- `accepted_steps`: number of proposed updates accepted.
-- `rejected_steps`: number of proposed updates rejected.
+- `proposed_steps`: number of optimizer proposals attempted.
+- `accepted_steps`: number of proposals that improved or were accepted by the
+  algorithm.
+- `rejected_steps`: number of proposals that did not improve or were rejected by the
+  algorithm.
 - `best_loss`: best loss observed by the optimizer.
-- `restore_best()`: restores the best parameter values observed so far and allows
-  optimization to continue from that restored state.
+- `restore_best()`: restores the best parameter values observed so far without
+  rewinding counters, schedules, the retained GA population, or the private random
+  stream. Later calls continue the optimizer's current lifecycle.
 - `reset_counters()`: clears counters and starts fresh run bookkeeping from the
   current model parameters without changing those parameters or rewinding the private
-  random stream. RHC restart progress and SA temperature also return to their initial
-  run values.
+  random stream. RHC restart progress, SA temperature, and the GA population also
+  return to their initial run values.
+
+For RHC and SA, proposals are individual candidate moves. For GA, all three step
+counters use generation units after population initialization: `proposed_steps` is
+the number of generations evolved, `accepted_steps` is the number whose best member
+strictly improved the incumbent, and `rejected_steps` is the number that did not.
+Therefore `accepted_steps + rejected_steps == proposed_steps` for every optimizer.
+`function_evals` always counts actual closure calls. For an even population of size
+`P`, GA initialization uses `P` evaluations and each later generation reuses `P / 2`
+elite losses while evaluating `P / 2` new children.
 
 RHC also exposes:
 
@@ -239,11 +271,11 @@ optimizer.load_state_dict(checkpoint["optimizer"])
 Create the receiving optimizer with the same number of parameter groups and the
 same number of parameters in each group, in the same order, before loading. Loading
 restores per-group settings and the defaults used by future groups, counters,
-current and best losses, the best-model parameters, and the private
-random-generator position. It also restores RHC restart settings and progress, the
-SA temperature schedule and current temperature, or GA population size. Continued
-calls therefore follow the same stochastic trajectory as an uninterrupted
-compatible run.
+current and best losses, the best-model parameters, and the private random-generator
+position. It also restores RHC restart settings and progress, the SA temperature
+schedule and current temperature, or the GA population size, nested individual
+parameter tensors, and corresponding loss list. Continued calls therefore follow
+the same stochastic trajectory as an uninterrupted compatible run.
 
 Optimizer state dictionaries created by older PyPerch versions did not contain run
 or random-generator state. They remain loadable as fresh-run bookkeeping where the

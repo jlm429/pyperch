@@ -16,11 +16,14 @@ class RandomizedOptimizer(torch.optim.Optimizer):
     _known_options = frozenset(
         {
             "cooling",
+            "initialization_step_size",
             "min_temperature",
             "mutation_rate",
+            "mutation_step_size",
             "population_size",
             "random_state",
             "restart_interval",
+            "restart_scale",
             "restarts",
             "step_size",
             "temperature",

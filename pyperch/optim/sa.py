@@ -55,12 +55,7 @@ class SA(RandomizedOptimizer):
     ):
         if step_size <= 0:
             raise ValueError("step_size must be positive.")
-        if temperature <= 0:
-            raise ValueError("temperature must be positive.")
-        if min_temperature <= 0:
-            raise ValueError("min_temperature must be positive.")
-        if cooling <= 0 or cooling > 1:
-            raise ValueError("cooling must be in the interval (0, 1].")
+        self._validate_temperature_options(temperature, min_temperature, cooling)
 
         defaults = {
             "step_size": step_size,
@@ -193,6 +188,25 @@ class SA(RandomizedOptimizer):
         if "step_size" in param_group and param_group["step_size"] <= 0:
             raise ValueError("step_size must be positive in every parameter group.")
 
+    @staticmethod
+    def _validate_temperature_options(
+        temperature: float,
+        min_temperature: float,
+        cooling: float,
+        *,
+        prefix: str = "",
+    ) -> None:
+        if not math.isfinite(temperature) or temperature <= 0:
+            raise ValueError(f"{prefix}temperature must be finite and positive.")
+        if not math.isfinite(min_temperature) or min_temperature <= 0:
+            raise ValueError(f"{prefix}min_temperature must be finite and positive.")
+        if min_temperature > temperature:
+            raise ValueError(f"{prefix}min_temperature must not exceed temperature.")
+        if not math.isfinite(cooling) or cooling <= 0 or cooling > 1:
+            raise ValueError(
+                f"{prefix}cooling must be finite and in the interval (0, 1]."
+            )
+
     def _algorithm_checkpoint_state(self) -> dict:
         return {
             "initial_temperature": self._initial_temperature,
@@ -206,12 +220,16 @@ class SA(RandomizedOptimizer):
         temperature = state["temperature"]
         min_temperature = state["min_temperature"]
         cooling = state["cooling"]
-        if initial_temperature <= 0 or temperature <= 0:
-            raise ValueError("Checkpoint temperatures must be positive.")
-        if min_temperature <= 0:
-            raise ValueError("Checkpoint min_temperature must be positive.")
-        if cooling <= 0 or cooling > 1:
-            raise ValueError("Checkpoint cooling must be in the interval (0, 1].")
+        self._validate_temperature_options(
+            initial_temperature,
+            min_temperature,
+            cooling,
+            prefix="Checkpoint ",
+        )
+        if not math.isfinite(temperature) or temperature < min_temperature:
+            raise ValueError(
+                "Checkpoint temperature must be finite and at least min_temperature."
+            )
 
         self._initial_temperature = initial_temperature
         self.temperature = temperature
