@@ -93,8 +93,8 @@ Parameters:
 - `restart_interval`: number of proposed steps between restarts, regardless of whether
   the proposal at the interval boundary is accepted or rejected. Use `None` to
   disable.
-- `restart_scale`: standard deviation of the zero-centered Gaussian parameter reset.
-  It defaults to `1.0` and can be overridden per parameter group.
+- `restart_scale`: finite, positive standard deviation of the zero-centered Gaussian
+  parameter reset. It defaults to `1.0` and can be overridden per parameter group.
 - `random_state`: seed for RHC's private random stream. An integer makes proposal
   sampling reproducible without reading or changing PyTorch's global random state.
   `None` creates a freshly seeded private stream.
@@ -161,6 +161,10 @@ Parameters:
 - `random_state`: seed for GA's private random stream. An integer makes population
   sampling reproducible without reading or changing PyTorch's global random state.
   `None` creates a freshly seeded private stream.
+
+GA no longer accepts the former `step_size` argument. Set
+`initialization_step_size` and `mutation_step_size` explicitly when migrating older
+code.
 
 The first `step()` evaluates and retains the complete initial population. Later
 calls each evolve one generation from the retained population. The best half of the
