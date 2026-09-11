@@ -33,8 +33,9 @@ implementation before freezing it.
   loops. Keep Optuna `Study` and `Trial` objects visible, retain every trial state,
   and preserve documented optional-dependency behavior.
 - Tune and select with validation data. Keep test data untouched until final
-  evaluation. Refit the selected configuration, call `restore_best()` when the
-  optimizer contract requires it, and evaluate that restored model.
+  evaluation. Refit the selected configuration. When a result, comparison, or final
+  evaluation claims the optimizer's best-found state, call `restore_best()` as the
+  optimizer contract requires before evaluating it.
 
 ## Measurement units
 
@@ -78,6 +79,8 @@ claim.
 
 ## Validation
 
+Scale validation rigor with the strength of the claim.
+
 - Confirm the frozen implementation passes the concern-specific and repository
   checks required by `CONTRIBUTING.md`.
 - Re-run a small deterministic slice before the full protocol and verify that
@@ -90,5 +93,5 @@ claim.
 - Comparing GA generations with RHC or SA proposals as though they cost the same.
 - Counting curve monitoring, validation, or test passes as optimizer function calls.
 - Reporting accelerator compatibility as a speedup without a benchmark.
-- Selecting from test results or evaluating the last trial instead of the refitted,
-  restored best configuration.
+- Selecting from test results or claiming best-found performance from the last trial
+  or an unrestored final state.

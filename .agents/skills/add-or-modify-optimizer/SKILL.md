@@ -38,8 +38,9 @@ Follow [CONTRIBUTING.md](../../../CONTRIBUTING.md) for repository validation com
   stochastic choice so equal seeds reproduce independently of PyTorch global RNG,
   `None` starts a fresh private stream, and counter resets do not rewind it.
 - Count `function_evals` as actual closure calls. Use proposal units for RHC and SA
-  step counters and generation units for GA after initialization. Keep
-  `accepted_steps + rejected_steps == proposed_steps`.
+  step counters and generation units for GA after initialization. Count each
+  documented proposal or generation outcome exactly once as accepted or rejected,
+  while keeping initialization and other algorithm-specific units separate.
 - Keep `best_loss` and its parameter checkpoint consistent. `restore_best()` restores
   the global best and synchronizes current-loss bookkeeping without rewinding
   counters, schedules, retained population, or RNG state.
@@ -59,12 +60,12 @@ Follow [CONTRIBUTING.md](../../../CONTRIBUTING.md) for repository validation com
 - SA accepts non-worsening proposals and accepts a worse proposal with Metropolis
   probability `exp(-loss increase / temperature)`. Cool after each proposal and
   respect the configured temperature floor.
-- GA initializes one population once, then retains it across calls. Preserve a
-  deterministic best-half elite set, with at least one elite and cached fitness.
-  Create and evaluate only new children through uniform crossover and group-scaled
-  mutation, and make each later call one generation. Keep current model parameters
-  aligned with the best current individual and checkpoint the full population and
-  its fitness while preserving the global best separately.
+- GA initializes one population once, then retains it across calls. Preserve
+  documented selection, crossover, mutation, and fitness-caching semantics, and
+  evaluate only individuals whose fitness is not already known. Make each later call
+  one generation. Keep current model parameters aligned with the best current
+  individual and checkpoint the full population and its fitness while preserving the
+  global best separately.
 
 ## Workflow
 
