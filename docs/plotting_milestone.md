@@ -1,5 +1,66 @@
 # Plotting and notebook implementation evidence
 
+## Final notebook release pass
+
+This section is the authoritative notebook evidence for the 2026-09-12 release
+pass. The plotting implementation milestone below is retained as historical
+context and does not describe the current notebook sequence.
+
+The four notebooks were executed in filename order with the repository runner,
+which starts a fresh kernel for each notebook and saves outputs only after a
+successful run. The saved notebooks report Python 3.12.13 on macOS arm64 with
+PyTorch 2.12.0, NumPy 2.2.6, Matplotlib 3.10.9, scikit-learn 1.7.2, and Optuna
+4.8.0.
+
+| Notebook | Code cells | Figure outputs | Computation and plotting |
+| --- | ---: | ---: | ---: |
+| 01 native training | 8 | 3 | 1.30 seconds |
+| 02 optimizer comparison | 6 | 3 | 1.77 seconds |
+| 03 training, learning, and validation curves | 6 | 3 | 1.32 seconds |
+| 04 Optuna tuning | 8 | 2 | 1.49 seconds |
+| Total | 28 | 11 | 5.88 seconds |
+
+These are the timings printed by the notebooks from the start of computation
+through final plotting. They exclude dependency imports and fresh-kernel startup,
+so they are a reproducibility record for this machine rather than an end-to-end
+runtime benchmark.
+
+Commands and results for the final pass:
+
+```bash
+poetry install --extras notebooks
+poetry run python scripts/execute_notebooks.py
+poetry run ruff format --check .
+poetry run ruff check .
+poetry run pytest
+poetry check
+git diff --check
+```
+
+The notebook runner completed all 28 code cells in four independent fresh kernels,
+saved 11 figures, and reported no cell errors. Ruff formatting and lint passed, all
+91 tests passed, `poetry check` passed, and the final diff check passed. The saved
+outputs were reviewed for readable labels, truthful units and interpretations,
+uncertainty descriptions, and clipping.
+
+The current outputs demonstrate the intended release changes. Native training
+starts with a direct RHC optimizer replacement, then improves frozen-head validation
+accuracy from 0.789 to 0.820 after restoring RHC's best state and to 0.842 after the
+layer-specific hybrid workflow. The comparison uses a 0.2 SA initial temperature
+and reports current loss, best loss, temperature, acceptance, optimizer calls, and
+measured objective or fitness evaluations without treating unequal budgets as
+equivalent. The curve workflow includes a training curve, selects width 32 from
+validation evidence while leaving 360 test observations untouched, and keeps its
+learning and validation claims tentative. The Optuna notebook retains the SA study,
+adds a GA study and selected-configuration refit, and reports 89 GA generations and
+364 fitness evaluations for the refit rather than equating the two counts.
+
+## Historical plotting implementation milestone
+
+The remainder records the earlier 2026-09-07 plotting implementation milestone.
+Its notebook counts, timings, outputs, and validation results are non-authoritative
+for the final release pass above.
+
 Implemented on `fm/pyperch-plotting-notebooks` from the fetched remote default,
 `origin/master` at `731af7729d453de07c415fe3b75d73fa7ac37073`. The isolated worktree
 started clean and matched that remote commit. No default-branch merge or push was
