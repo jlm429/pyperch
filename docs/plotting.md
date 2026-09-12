@@ -152,7 +152,7 @@ existing artists and titles. Pass `legend=False` when composing a shared legend.
 
 For executed examples, see [native training](../examples/notebooks/01_native_training.ipynb),
 [optimizer comparison](../examples/notebooks/02_optimizer_comparison.ipynb), and
-[learning and validation curves](../examples/notebooks/03_learning_and_validation.ipynb).
+[training, learning, and validation curves](../examples/notebooks/03_learning_and_validation.ipynb).
 
 ## Conceptual references
 

@@ -65,10 +65,10 @@ work with PyPerch optimizers.
   PyTorch training loop, including frozen layers and separate Adam/RHC updates.
 - [Optimizer convergence and cost](examples/notebooks/02_optimizer_comparison.ipynb):
   Compare RHC, SA, GA, and Adam across repeated runs.
-- [Learning and validation curves](examples/notebooks/03_learning_and_validation.ipynb):
-  Explore training set size, model capacity, and generalization.
-- [Optuna tuning](examples/notebooks/04_optuna_tuning.ipynb): Tune optimizer settings
-  with repeated Optuna trials and evaluate the final model.
+- [Training, learning, and validation curves](examples/notebooks/03_learning_and_validation.ipynb):
+  Explore optimization progress, training set size, model capacity, and generalization.
+- [Optuna tuning](examples/notebooks/04_optuna_tuning.ipynb): Tune SA and GA settings
+  with repeated Optuna trials and evaluate the selected refits.
 
 See the [examples guide](examples/README.md) for notebook-running instructions and
 reproducibility information.

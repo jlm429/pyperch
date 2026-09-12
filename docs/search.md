@@ -175,8 +175,9 @@ Supported directions:
 # Examples
 
 The [executed Optuna notebook](../examples/notebooks/04_optuna_tuning.ipynb)
-shows repeated trial objectives, native study history, best-parameter refitting,
-and final test evaluation. Its model training curves use the
+shows repeated SA trial objectives, a compact GA study with measured fitness
+evaluations, native studies, selected-parameter refitting, and final test
+evaluations. Its model training curves use the
 [public plotting API](plotting.md), which consumes existing result arrays and
 requires caller-owned Matplotlib Axes. Follow the
 [notebook setup and execution guide](../examples/README.md) to run it independently.
