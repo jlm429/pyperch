@@ -26,7 +26,7 @@ plus a thin Optuna search layer for optional hyperparameter studies.
 | `pyperch/plotting/` | Result preparation and rendering on caller-owned Axes |
 | `examples/notebooks/` | Executed concept-led PyTorch and Optuna notebooks |
 | `examples/README.md` | Notebook setup and reproducibility guidance |
-| `docs/` | General optimizer and search usage guides |
+| `docs/` | Optimizer, search, and plotting usage guides |
 | `pyproject.toml` | Supported Python versions, dependencies, and tool settings |
 
 ## Validation
@@ -45,7 +45,7 @@ Follow the validation requirements and commands in the
 - Do not add telemetry, network calls, downloads, or dependencies without a project
   requirement.
 - Before handoff, inspect the final diff for credentials, sensitive information,
-  generated artifacts, and local files.
+  local artifacts, and generated junk.
 
 ## Skill routing
 
@@ -53,6 +53,7 @@ Follow the validation requirements and commands in the
 | --- | --- |
 | Add or change an optimizer | [`.agents/skills/add-or-modify-optimizer/SKILL.md`](.agents/skills/add-or-modify-optimizer/SKILL.md) |
 | Run a comparative experiment | [`.agents/skills/run-reproducible-experiment/SKILL.md`](.agents/skills/run-reproducible-experiment/SKILL.md) |
+| Maintain an executed notebook or example | [`.agents/skills/maintain-notebook-examples/SKILL.md`](.agents/skills/maintain-notebook-examples/SKILL.md) |
 | Other work | This guide and the nearest implementation, test, example, and documentation |
 
 ## Project documentation

@@ -41,8 +41,10 @@ paths and commands, scope, and the complete diff. Tests are necessary evidence, 
 they do not by themselves establish algorithm correctness, API quality, backward
 compatibility, or performance claims.
 
-For notebook or plotting changes, also install the notebook extra and execute every
-notebook from a fresh kernel:
+For changes to notebook behavior or output, optimizer semantics or public APIs shown
+in notebooks, convergence claims, or plotting behavior demonstrated there, also
+install the notebook extra and execute the affected notebooks from fresh kernels.
+The repository runner executes the complete notebook set:
 
 ```bash
 poetry install --extras notebooks
@@ -71,7 +73,9 @@ The plotting contract and accepted array shapes live in [docs/plotting.md](docs/
   `model.parameters()` use, and avoid trainers, model wrappers, estimator APIs, or
   configuration frameworks.
 - Examples should be runnable ordinary PyTorch programs. Keep data preparation,
-  models, losses, evaluation, freezing, and device handling visible.
+  models, losses, evaluation, freezing, and device handling visible. Follow the
+  [notebook skill](.agents/skills/maintain-notebook-examples/SKILL.md) when changing
+  an executed notebook or its example guidance.
 - Compatibility changes should account for the declared Python and PyTorch ranges,
   constructor defaults, public imports, parameter dtype and device, and frozen
   parameters where relevant.
