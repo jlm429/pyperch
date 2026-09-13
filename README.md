@@ -7,6 +7,7 @@
 ![Linter: Ruff](https://img.shields.io/badge/lint-ruff-blue.svg)
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
+![PyPerch randomized optimization for PyTorch workflows](https://raw.githubusercontent.com/jlm429/pyperch/master/docs/assets/pyperch_repo_image.png)
 
 PyPerch provides randomized hill climbing (RHC), simulated annealing (SA), and
 genetic algorithm (GA) optimizers for ordinary `torch.nn.Module` workflows. Pass
@@ -26,25 +27,15 @@ Install from PyPI:
 
 ```bash
 pip install pyperch
-```
-
-or with Poetry:
-
-```bash
-poetry add pyperch
-```
-
-Optuna search is an optional extra. Install it from PyPI with:
-
-```bash
+pip install "pyperch[plotting]"
 pip install "pyperch[optuna]"
 ```
 
-or with Poetry:
-
-```bash
-poetry add "pyperch[optuna]"
-```
+Core NumPy supports curve preparation; the plotting extra supplies Matplotlib for
+rendering. The Optuna extra enables hyperparameter search. The separate `notebooks`
+extra supplies the broader environment needed to execute the repository's notebooks
+from a source checkout; it does not install the `.ipynb` files. See the
+[examples guide](examples/README.md) for setup.
 
 ---
 
@@ -79,7 +70,7 @@ reproducibility information.
 
 - [General Usage Guide](docs/general_usage_guide.md): RHC, SA, and GA in ordinary
   PyTorch training loops
-- [Executed examples](examples/README.md): optimizer, freezing, composition, and
+- [Examples guide](examples/README.md): optimizer, freezing, composition, and
   comparison workflows
 - [Plotting API and terminology](docs/plotting.md): prepare and render recorded
   curves

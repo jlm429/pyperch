@@ -16,9 +16,13 @@ bundled data, with no dataset downloads.
 From a source checkout with Python 3.10 through 3.13:
 
 ```bash
-poetry install --extras notebooks
-poetry run jupyter notebook examples/notebooks
+python -m pip install -e ".[notebooks]"
+jupyter notebook examples/notebooks
 ```
+
+The `notebooks` extra installs the dependencies needed to execute the four notebooks
+already present in the cloned repository. It does not install notebook files into a
+normal PyPI installation.
 
 Open a notebook and run all cells in order. Allow a few minutes for the complete
 set on a laptop CPU, plus installation and first-startup time. No GPU is needed.
