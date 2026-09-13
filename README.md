@@ -26,25 +26,15 @@ Install from PyPI:
 
 ```bash
 pip install pyperch
-```
-
-or with Poetry:
-
-```bash
-poetry add pyperch
-```
-
-Optuna search is an optional extra. Install it from PyPI with:
-
-```bash
+pip install "pyperch[plotting]"
 pip install "pyperch[optuna]"
 ```
 
-or with Poetry:
-
-```bash
-poetry add "pyperch[optuna]"
-```
+The plotting extra enables the plotting and rendering API, while the Optuna extra
+enables hyperparameter search. The separate `notebooks` extra supplies the broader
+environment needed to execute the repository's notebooks from a source checkout;
+it does not install the `.ipynb` files. See the [examples guide](examples/README.md)
+for setup.
 
 ---
 
@@ -79,7 +69,7 @@ reproducibility information.
 
 - [General Usage Guide](docs/general_usage_guide.md): RHC, SA, and GA in ordinary
   PyTorch training loops
-- [Executed examples](examples/README.md): optimizer, freezing, composition, and
+- [Examples guide](examples/README.md): optimizer, freezing, composition, and
   comparison workflows
 - [Plotting API and terminology](docs/plotting.md): prepare and render recorded
   curves
