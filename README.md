@@ -7,7 +7,7 @@
 ![Linter: Ruff](https://img.shields.io/badge/lint-ruff-blue.svg)
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
-![PyPerch randomized optimization for PyTorch workflows](pyperch/assets/pyperch_repo_image.png)
+![PyPerch randomized optimization for PyTorch workflows](https://raw.githubusercontent.com/jlm429/pyperch/master/docs/assets/pyperch_repo_image.png)
 
 PyPerch provides randomized hill climbing (RHC), simulated annealing (SA), and
 genetic algorithm (GA) optimizers for ordinary `torch.nn.Module` workflows. Pass
