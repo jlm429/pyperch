@@ -7,6 +7,7 @@
 ![Linter: Ruff](https://img.shields.io/badge/lint-ruff-blue.svg)
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
+![PyPerch randomized optimization for PyTorch workflows](pyperch/assets/pyperch_repo_image.png)
 
 PyPerch provides randomized hill climbing (RHC), simulated annealing (SA), and
 genetic algorithm (GA) optimizers for ordinary `torch.nn.Module` workflows. Pass
@@ -30,11 +31,11 @@ pip install "pyperch[plotting]"
 pip install "pyperch[optuna]"
 ```
 
-The plotting extra enables the plotting and rendering API, while the Optuna extra
-enables hyperparameter search. The separate `notebooks` extra supplies the broader
-environment needed to execute the repository's notebooks from a source checkout;
-it does not install the `.ipynb` files. See the [examples guide](examples/README.md)
-for setup.
+Core NumPy supports curve preparation; the plotting extra supplies Matplotlib for
+rendering. The Optuna extra enables hyperparameter search. The separate `notebooks`
+extra supplies the broader environment needed to execute the repository's notebooks
+from a source checkout; it does not install the `.ipynb` files. See the
+[examples guide](examples/README.md) for setup.
 
 ---
 
