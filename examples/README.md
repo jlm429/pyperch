@@ -20,9 +20,10 @@ python -m pip install -e ".[notebooks]"
 jupyter notebook examples/notebooks
 ```
 
-The `notebooks` extra installs the dependencies needed to execute the four notebooks
-already present in the cloned repository. It does not install notebook files into a
-normal PyPI installation.
+The `.ipynb` files are part of the source repository and are not installed by a
+normal PyPI installation. The `notebooks` extra provides the broader source-checkout
+environment needed to execute them. Beyond base PyPerch, it adds `scikit-learn`,
+`optuna`, `nbconvert`, `ipykernel`, and `notebook`.
 
 Open a notebook and run all cells in order. Allow a few minutes for the complete
 set on a laptop CPU, plus installation and first-startup time. No GPU is needed.
