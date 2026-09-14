@@ -7,17 +7,18 @@
 ![Linter: Ruff](https://img.shields.io/badge/lint-ruff-blue.svg)
 [![CircleCI](https://dl.circleci.com/status-badge/img/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/circleci/WH9eaoZnQRJ8SGFDrvqQAd/5meq6x5R3uDA3KSuHARdVk/tree/master)
 
-![PyPerch randomized optimization for PyTorch workflows](https://raw.githubusercontent.com/jlm429/pyperch/master/docs/assets/pyperch_repo_image.png)
+![PyPerch randomized optimization for PyTorch workflows](https://raw.githubusercontent.com/jlm429/pyperch/master/docs/assets/pyperch_repo_image3.png)
 
 PyPerch provides randomized hill climbing (RHC), simulated annealing (SA), and
 genetic algorithm (GA) optimizers for ordinary `torch.nn.Module` workflows. Pass
 native PyTorch parameter iterables, define the loss in a closure, and keep model
 architecture, data loading, forward passes, metrics, and training loops in PyTorch.
 
-Optional plotting utilities prepare recorded results for caller-owned Matplotlib
-Axes. A thin Optuna layer supports hyperparameter studies without hiding native
-trials or studies. Start with the [General Usage Guide](docs/general_usage_guide.md)
-for optimizer semantics and complete examples.
+Plotting utilities included in the normal installation prepare recorded results and
+render them on caller-owned Matplotlib Axes. A thin optional Optuna layer supports
+hyperparameter studies without hiding native trials or studies. Start with the
+[General Usage Guide](docs/general_usage_guide.md) for optimizer semantics and
+complete examples.
 
 ## Installation
 
@@ -27,15 +28,12 @@ Install from PyPI:
 
 ```bash
 pip install pyperch
-pip install "pyperch[plotting]"
 pip install "pyperch[optuna]"
 ```
 
-Core NumPy supports curve preparation; the plotting extra supplies Matplotlib for
-rendering. The Optuna extra enables hyperparameter search. The separate `notebooks`
-extra supplies the broader environment needed to execute the repository's notebooks
-from a source checkout; it does not install the `.ipynb` files. See the
-[examples guide](examples/README.md) for setup.
+The normal installation includes NumPy for curve preparation and Matplotlib for
+rendering. The Optuna extra enables hyperparameter search. To run the repository's
+notebooks from a source checkout, follow the [examples guide](examples/README.md).
 
 ---
 

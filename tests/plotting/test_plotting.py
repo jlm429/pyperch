@@ -275,7 +275,7 @@ def test_invalid_styles_do_not_add_artists(axes, style):
     assert not axes[1][0].lines
 
 
-def test_preparation_needs_no_optional_packages_or_training():
+def test_preparation_does_not_eagerly_import_dependencies_or_run_training():
     result = subprocess.run(
         [
             sys.executable,
@@ -286,7 +286,7 @@ from importlib.abc import MetaPathFinder
 class Block(MetaPathFinder):
     def find_spec(self, fullname, path=None, target=None):
         if fullname.split('.')[0] in {'matplotlib', 'optuna', 'sklearn'}:
-            raise ImportError('optional dependency blocked')
+            raise ImportError('dependency blocked')
 sys.meta_path.insert(0, Block())
 import pyperch
 from pyperch.optim import RHC, SA, GA
@@ -310,7 +310,7 @@ assert 'matplotlib' not in sys.modules
     assert result.returncode == 0, result.stderr
 
 
-def test_missing_matplotlib_install_message(monkeypatch):
+def test_missing_matplotlib_recommends_base_reinstall(monkeypatch):
     original = builtins.__import__
 
     def blocked(name, *args, **kwargs):
@@ -319,7 +319,7 @@ def test_missing_matplotlib_install_message(monkeypatch):
         return original(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", blocked)
-    with pytest.raises(ImportError, match=r"pyperch\[plotting\]"):
+    with pytest.raises(ImportError, match=r"pip install pyperch"):
         plot_training_curve(prepared("training"), ax=None)
 
 

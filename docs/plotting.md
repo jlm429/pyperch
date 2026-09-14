@@ -5,7 +5,8 @@ summarizes recorded numeric results. Rendering draws on a caller-provided Axes a
 returns that same Axes. The caller controls figure creation, layout, display, saving,
 scales, and further customization.
 
-Install the rendering dependency with `pip install 'pyperch[plotting]'`.
+Matplotlib rendering is available from the normal `pip install pyperch`
+installation.
 
 ## Terminology
 

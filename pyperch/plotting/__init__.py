@@ -233,8 +233,8 @@ def _plot(data, kind, ax, legend, line_kwargs):
         from matplotlib.axes import Axes
     except ImportError as exc:
         raise ImportError(
-            "Rendering requires Matplotlib. "
-            "Install with: pip install 'pyperch[plotting]'"
+            "Rendering requires Matplotlib, which is included with PyPerch. "
+            "Reinstall with: pip install pyperch"
         ) from exc
     if not isinstance(ax, Axes):
         raise TypeError("ax must be an explicit Matplotlib Axes.")
