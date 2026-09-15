@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0 - 2026-09-15
+
 - Persist GA populations and known elite losses across generations, count GA steps
   in generation units, and preserve population state across checkpoints.
 - Replace GA `step_size` with separate `initialization_step_size` and
